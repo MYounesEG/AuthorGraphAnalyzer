@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Graph</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+        }
+
+        #left-sidebar, #right-sidebar {
+            width: 20%;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: transform 0.3s ease, visibility 0.3s ease;
+            background-color: transparent;
+            position: absolute;
+            top: 0;
+            height: 100%;
+            z-index: 10;
+        }
+
+        #left-sidebar {
+            border-right: 1px solid #ccc;
+            visibility: hidden;
+            left: 0;
+        }
+
+        #right-sidebar {
+            border-left: 1px solid #ccc;
+            right: 0;
+        }
+
+        #network-graph {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000000;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .text-box-container {
+            margin-bottom: 15px;
+        }
+
+        .text-box-container input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+input[type="text"] {
+  background: transparent;
+  border: none;
+  color: white;
+}
+        .text-box-container button {
+            width: 100%;
+            padding: 5px;    
+			background-color: transparent;
+            color: #ffffff;
+            cursor: pointer;
+			border: 1px solid white; /* White outline */
+            border-radius: 5px;
+            transition: all 0.5s;
+        }
+
+     /*   .text-box-container button:hover {
+            transform: scale(1.1);
+        }*/
+
+        #results {
+            list-style: none;
+            padding: 0;
+        }
+
+.fullscreen-icon {
+  font-size: 24px;
+}
+        #results li {
+            margin: 5px 0;
+            padding: 5px;
+            background: #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .visible {
+            transform: translateX(0);
+            visibility: visible;
+        }
+
+        #toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 10px 15px;
+            border: none;
+			background-color: transparent;
+            color: #ffffff;
+			border: 1px solid white; /* White outline */
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.5s;
+        }
+
+        #toggle-button:hover {
+            transform: scale(1.1);
+        }
+
+    </style>
+</head>
+<body>
+
+    <button id="toggle-button">
+		<span id="fullscreen-icon" class="fullscreen-icon">&#x26F6;</span> <!-- Fullscreen icon -->
+	</button>
+
+    <div id="left-sidebar">
+        <h3>Results</h3>
+        <ul id="results"></ul>
+    </div>
+
+    <div id="network-graph">
+        <h2>Network Graph Visualization</h2>
+    </div>
+
+    <div id="right-sidebar">
+        <h3>Controls</h3>
+        <div class="text-box-container">
+            <input type="text" id="input1" placeholder="Enter ID 1">
+            <button onclick="handleButtonClick(1)">Submit</button>
+        </div>
+        <div class="text-box-container">
+            <input type="text" id="input2" placeholder="Enter ID 2">
+            <button onclick="handleButtonClick(2)">Submit</button>
+        </div>
+        <div class="text-box-container">
+            <input type="text" id="input3" placeholder="Enter ID 3">
+            <button onclick="handleButtonClick(3)">Submit</button>
+        </div>
+        <div class="text-box-container">
+            <input type="text" id="input4" placeholder="Enter ID 4">
+            <button onclick="handleButtonClick(4)">Submit</button>
+        </div>
+        <div class="text-box-container">
+            <input type="text" id="input5" placeholder="Enter ID 5">
+            <button onclick="handleButtonClick(5)">Submit</button>
+        </div>
+        <div class="text-box-container">
+            <input type="text" id="input6" placeholder="Enter ID 6">
+            <button onclick="handleButtonClick(6)">Submit</button>
+        </div>
+		<div class="text-box-container">
+            <input type="text" id="input7" placeholder="Enter ID 7">
+            <button onclick="handleButtonClick(7)">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        const leftSidebar = document.getElementById('left-sidebar');
+        const rightSidebar = document.getElementById('right-sidebar');
+        const networkGraph = document.getElementById('network-graph');
+        const toggleButton = document.getElementById('toggle-button');
+const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+        function handleButtonClick(inputNumber) {
+            const input = document.getElementById(`input${inputNumber}`);
+            const resultList = document.getElementById('results');
+
+            if (input.value.trim() !== '') {
+                const listItem = document.createElement('li');
+                listItem.textContent = `ID ${inputNumber}: ${input.value}`;
+                resultList.appendChild(listItem);
+
+                // Make left sidebar visible
+                leftSidebar.style.visibility = 'visible';
+
+                input.value = '';
+            } else {
+                alert('Please enter a valid ID.');
+            }
+        }
+        
+        toggleButton.addEventListener('click', () => {
+            const isHidden = rightSidebar.style.display === 'none';
+            let myDocument = document.documentElement;
+            if (isHidden) {
+			
+				fullscreenIcon.innerHTML = '&#x26F6;'; // Change icon to enter
+                rightSidebar.style.display = 'block';
+                leftSidebar.style.display = 'block';
+                networkGraph.style.flex = 1;
+                
+                if(document.exitFullscreen){
+                    document.exitFullscreen();
+                }
+                else if(document.msexitFullscreen){
+                    document.msexitFullscreen();
+                }
+                else if(document.mozexitFullscreen){
+                    document.mozexitFullscreen();
+                }
+                else if(document.webkitexitFullscreen){
+                    document.webkitexitFullscreen();
+                }
+                
+            } else {
+			
+			  fullscreenIcon.innerHTML = '&#x21e5;'; // Change icon to exit
+                rightSidebar.style.display = 'none';
+                leftSidebar.style.display = 'none';
+                networkGraph.style.flex = '2';
+                if(myDocument.requestFullscreen){
+                    myDocument.requestFullscreen();
+                }
+                else if(myDocument.msRequestFullscreen){
+                    myDocument.msRequestFullscreen();
+                }
+                else if(myDocument.mozRequestFullscreen){
+                    myDocument.mozRequestFullscreen();
+                }
+                else if(myDocument.webkitRequestFullscreen){
+                    myDocument.webkitRequestFullscreen();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
