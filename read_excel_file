@@ -1,0 +1,21 @@
+import pandas as pd
+
+class ReadExcelFile:
+    def __init__(self, excel_file):
+        self.excel_file = excel_file
+        self.df = pd.read_excel(self.excel_file)
+        self.df = self.df.drop_duplicates(subset=['orcid'])
+
+    def get_data_by_id(self, id_value, columns_to_keep):
+        result = self.df[self.df['orcid'] == id_value]
+        if result.empty:
+            return f"ID {id_value} not found in the dataset."
+        result_data = result.iloc[0]
+        separated_data = {}
+        for column in result_data.index:
+            if column != 'orcid':
+                if column in columns_to_keep:
+                    separated_data[column] = [result_data[column]]
+                else:
+                    separated_data[column] = result_data[column]
+        return separated_data
