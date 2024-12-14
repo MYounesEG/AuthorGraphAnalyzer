@@ -1,0 +1,18 @@
+from read_excel_file import ReadExcelFile
+
+class MainClass:
+    def __init__(self, excel_file,id_to_search):
+        self.reader = ReadExcelFile(excel_file)
+        self.id_to_search =id_to_search
+    
+    def run(self):
+        columns_to_keep = ['author_name', 'coauthors']
+        extracted_data = self.reader.get_data_by_id(self.id_to_search, columns_to_keep)
+        if isinstance(extracted_data, dict):
+            print(f"\nExtracted Data for ID {self.id_to_search}:")
+            for column, value in extracted_data.items():
+                print(f"{column}: {value}")
+        else:
+            print(extracted_data)
+
+
