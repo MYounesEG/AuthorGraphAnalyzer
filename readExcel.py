@@ -41,9 +41,7 @@ class ReadExcelFile:
             
             # Add to DOI lookup
             doi = row['doi']
-            if doi not in self.doi:
-                self.doi[doi] = []
-            self.doi[doi].append(record)
+            self.doi[doi] = record
 
     def get_data_by_id(self, id_type: str, id_value: str) -> Union[List[dict], str]:
         """
