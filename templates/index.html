@@ -4,24 +4,104 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Author Collaboration Network</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+      :root {
+        --bg-color: #1a1a2e;
+        --node-highlight: #16213e;
+        --edge-color: #0f3460;
+        --text-color: #e94560;
+      }
+
+      body,
+      html,
+      #networkGraph {
+        user-select: none; /* Disables text selection for all elements */
+        width: 100%;
+        height: 100%; /* Ensure both html and body elements take full height */
+        margin: 0; /* Remove default margins */
+        padding: 0; /* Remove default padding */
+        overflow: hidden;
+        font-family: "Arial", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+      }
+
+      canvas {
+        display: block;
+        cursor: grab;
+      }
+      #control-panel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 10;
+      }
+      .control-btn {
+        background-color: var(--node-highlight);
+        color: var(--text-color);
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .control-btn:hover {
+        transform: scale(1.1);
+      }
+      #info-box {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(22, 33, 62, 0.9);
+        color: var(--text-color);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: none;
+        max-width: 250px;
+        word-wrap: break-word;
+        z-index: 20;
+      }
+      .icon {
+        margin-right: 8px;
+      }
+
+      .node {
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+      .link {
+        stroke: #999;
+        stroke-opacity: 0.6;
+      }
+      text {
+        color: green;
+        font-size: 12px;
+        pointer-events: none;
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none;
+      }
       body {
         margin: 0;
         display: flex;
         height: 100vh;
         font-family: Arial, Helvetica, sans-serif;
         overflow: hidden;
-        background-color: #000000;
+        background-color: #a87777;
         color: #ffffff;
       }
-
-      #network-graph {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: all 0.3s ease;
-        position: relative;
+      svg {
+        width: 100vw;
+        height: 100vh;
       }
 
       #operations-button {
@@ -211,7 +291,6 @@
 
   <body>
     <!-- Rest of the HTML remains the same as in the previous version -->
-    <button id="operations-button">Operations</button>
 
     <div id="modal-overlay">
       <div id="modal-content">
@@ -301,12 +380,336 @@
       </div>
     </div>
 
-    <div id="network-graph">
-      <h2>Author Collaboration Network</h2>
+    <div id="info-box"></div>
+    <div id="control-panel">
+      <button
+        id="full-screen-btn"
+        class="control-btn"
+        title="Toggle Fullscreen"
+      >
+        <i class="fas fa-expand icon"></i>Fullscreen
+      </button>
+      <button id="zoom-in-btn" class="control-btn" title="Zoom In">
+        <i class="fas fa-search-plus icon"></i>Zoom In
+      </button>
+      <button id="zoom-out-btn" class="control-btn" title="Zoom Out">
+        <i class="fas fa-search-minus icon"></i>Zoom Out
+      </button>
+      <button id="reset-btn" class="control-btn" title="Reset View">
+        <i class="fas fa-redo icon"></i>Reset
+      </button>
+      <button
+        id="pause-move-btn"
+        class="control-btn"
+        title="Pause/Resume Movement"
+      >
+        <i class="fas fa-pause icon"></i>Pause Movement
+      </button>
+      <button class="control-btn">
+        <i class="fas fa-cogs icon"></i>Operations
+      </button>
     </div>
+    <canvas id="networkGraph"></canvas>
 
     <!-- JavaScript remains the same -->
     <script>
+      const canvas = document.getElementById("networkGraph");
+      canvas.width*=1.2;
+      canvas.height*=1.2;
+      
+      const ctx = canvas.getContext("2d");
+      const infoBox = document.getElementById("info-box");
+      const fullScreenBtn = document.getElementById("full-screen-btn");
+      const zoomInBtn = document.getElementById("zoom-in-btn");
+      const zoomOutBtn = document.getElementById("zoom-out-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const pauseMoveBtn = document.getElementById("pause-move-btn"); // New button
+
+      // Advanced configuration
+      const CONFIG = {
+        NODES: 150,
+        NODE_SIZE_RANGE: [20, 40],
+        EDGE_THICKNESS_RANGE: [0.5, 3],
+        ZOOM_SENSITIVITY: 0.1,
+        MAX_ZOOM: 10,
+        MIN_ZOOM: 0.01,
+      };
+
+      let defultCameraSettings = {
+        x: 2303, 
+        y: 1180, 
+        zoom: 0.5, 
+        initialX: 0, 
+        initialY: 0
+      };
+
+      let camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
+
+      const nodes = [];
+      const edges = [];
+      let isMoving = true; // Nodes start moving by default
+
+      // Define the count of the nodes
+      const nodeCount = CONFIG.NODES;
+
+      // Generate nodes
+      function generateNodes() {
+        const virtualWidth = window.innerWidth * 3;
+        const virtualHeight = window.innerHeight * 3;
+
+        for (let i = 0; i < nodeCount; i++) {
+          const nodeSize =
+            Math.random() *
+              (CONFIG.NODE_SIZE_RANGE[1] - CONFIG.NODE_SIZE_RANGE[0]) +
+            CONFIG.NODE_SIZE_RANGE[0];
+          nodes.push({
+            id: i,
+            x: Math.random() * virtualWidth,
+            y: Math.random() * virtualHeight,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            size: nodeSize,
+            label: `Node ${i}`,
+            color: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${
+              Math.random() * 255
+            }, ${Math.random() * 0.5 + 0.5})`,
+            info: `Advanced Node ${i}\nProperties:\n- Size: ${nodeSize.toFixed(
+              2
+            )}\n- Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
+              Math.random() * virtualHeight
+            ).toFixed(2)})`,
+          });
+        }
+      }
+
+      // Generate edges
+      function generateEdges() {
+        nodes.forEach((node, i) => {
+          const connections = Math.floor(Math.random() * 4) + 3;
+          const connectedIndices = new Set();
+
+          while (connectedIndices.size < connections) {
+            const targetIndex = Math.floor(Math.random() * CONFIG.NODES);
+            if (targetIndex !== i && !connectedIndices.has(targetIndex)) {
+              connectedIndices.add(targetIndex);
+              edges.push({
+                source: i,
+                target: targetIndex,
+                thickness:
+                  Math.random() *
+                    (CONFIG.EDGE_THICKNESS_RANGE[1] -
+                      CONFIG.EDGE_THICKNESS_RANGE[0]) +
+                  CONFIG.EDGE_THICKNESS_RANGE[0],
+                weight: Math.random(),
+              });
+            }
+          }
+        });
+      }
+
+      // Render nodes and edges
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(camera.zoom, camera.zoom);
+        ctx.translate(-camera.x, -camera.y);
+
+        // Draw edges with weight-based opacity
+        edges.forEach((edge) => {
+          const source = nodes[edge.source];
+          const target = nodes[edge.target];
+          ctx.beginPath();
+          ctx.lineWidth = edge.thickness / camera.zoom;
+          ctx.strokeStyle = `rgba(100, 100, 100, ${edge.weight * 0.5})`;
+          ctx.moveTo(source.x, source.y);
+          ctx.lineTo(target.x, target.y);
+          ctx.stroke();
+        });
+
+        // Draw nodes with dynamic sizing and labels
+        nodes.forEach((node) => {
+          const nodeRadius = node.size / camera.zoom;
+
+          // Draw node circle
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+          ctx.fillStyle = node.color;
+          ctx.fill();
+          ctx.closePath();
+
+          // Draw node label with opposite color
+          ctx.fillStyle = getOppositeColor(node.color);
+          ctx.font = `${nodeRadius * 0.5}px Arial`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(node.label, node.x, node.y);
+        });
+
+        ctx.restore();
+        updateNodes();
+        requestAnimationFrame(render);
+      }
+
+      // Update node positions
+      function updateNodes() {
+        const virtualWidth = window.innerWidth * 3;
+        const virtualHeight = window.innerHeight * 3;
+
+        if (isMoving) {
+          // Only update positions if isMoving is true
+          nodes.forEach((node) => {
+            node.x += node.vx;
+            node.y += node.vy;
+
+            // Bounce off edges
+            if (node.x < 0 || node.x > virtualWidth) node.vx *= -1;
+            if (node.y < 0 || node.y > virtualHeight) node.vy *= -1;
+          });
+        }
+      }
+
+      // Get opposite color of the node
+      function getOppositeColor(color) {
+        const rgba = color.match(/rgba\((\d+), (\d+), (\d+), (\d+\.?\d*)\)/);
+        if (!rgba) return "white"; // If no match, return white
+        const r = 255 - parseInt(rgba[1]);
+        const g = 255 - parseInt(rgba[2]);
+        const b = 255 - parseInt(rgba[3]);
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      // Event handlers
+      function setupEventHandlers() {
+        let isDragging = false;
+        let lastMouseX, lastMouseY;
+        let justClicked = false;
+
+        canvas.addEventListener("mousedown", (e) => {
+          isDragging = true;
+          lastMouseX = e.clientX;
+          lastMouseY = e.clientY;
+          justClicked = true;
+          canvas.style.cursor = "grabbing";
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+          if (isDragging) {
+            const deltaX = (e.clientX - lastMouseX) / camera.zoom;
+            const deltaY = (e.clientY - lastMouseY) / camera.zoom;
+            camera.x -= deltaX;
+            camera.y -= deltaY;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            justClicked = false;
+          }
+        });
+
+        canvas.addEventListener("mouseup", (e) => {
+          isDragging = false;
+          canvas.style.cursor = "grab";
+
+          // Only trigger node selection on a clean click (no dragging)
+          if (justClicked) {
+            const scaledMouseX =
+              (e.clientX - canvas.width / 2) / camera.zoom + camera.x;
+            const scaledMouseY =
+              (e.clientY - canvas.height / 2) / camera.zoom + camera.y;
+
+            const clickedNode = nodes.find((node) => {
+              const dx = scaledMouseX - node.x;
+              const dy = scaledMouseY - node.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              return distance < node.size / camera.zoom;
+            });
+
+            if (clickedNode) {
+              infoBox.style.left = `${e.clientX + 10}px`;
+              infoBox.style.top = `${e.clientY + 10}px`;
+              infoBox.style.display = "block";
+              infoBox.innerText = clickedNode.info;
+            } else {
+              infoBox.style.display = "none";
+            }
+          }
+        });
+
+        canvas.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          const scaleFactor = 1 + Math.sign(e.deltaY) * CONFIG.ZOOM_SENSITIVITY;
+          const newZoom = Math.max(
+            CONFIG.MIN_ZOOM,
+            Math.min(CONFIG.MAX_ZOOM, camera.zoom * scaleFactor)
+          );
+
+          const mouseX = (e.clientX - canvas.width / 2) / camera.zoom;
+          const mouseY = (e.clientY - canvas.height / 2) / camera.zoom;
+
+          camera.x += mouseX * (1 - scaleFactor / camera.zoom);
+          camera.y += mouseY * (1 - scaleFactor / camera.zoom);
+          camera.zoom = newZoom;
+        });
+
+        // Fullscreen toggle
+        fullScreenBtn.addEventListener("click", () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            fullScreenBtn.innerHTML =
+              '<i class="fas fa-compress icon"></i>Exit Fullscreen';
+          } else {
+            document.exitFullscreen();
+            fullScreenBtn.innerHTML =
+              '<i class="fas fa-expand icon"></i>Fullscreen';
+          }
+        });
+
+        // Zoom buttons
+        zoomInBtn.addEventListener("click", () => {
+          camera.zoom = Math.min(
+            CONFIG.MAX_ZOOM,
+            camera.zoom * (1 + CONFIG.ZOOM_SENSITIVITY)
+          );
+        });
+
+        zoomOutBtn.addEventListener("click", () => {
+          camera.zoom = Math.max(
+            CONFIG.MIN_ZOOM,
+            camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY)
+          );
+        });
+
+        // Reset view
+        resetBtn.addEventListener("click", () => {
+          camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
+        });
+
+        // Pause/Resume movement button
+        pauseMoveBtn.addEventListener("click", () => {
+
+          isMoving = !isMoving; // Toggle movement state
+          if (isMoving) {
+            pauseMoveBtn.innerHTML =
+              '<i class="fas fa-pause icon"></i>Pause Movement'; // Change to "Pause"
+          } else {
+            pauseMoveBtn.innerHTML =
+              '<i class="fas fa-play icon"></i>Resume Movement'; // Change to "Resume"
+          }
+        });
+      }
+
+      // Initialize the canvas and start the animation
+      function init() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        generateNodes();
+        generateEdges();
+        setupEventHandlers();
+        render();
+      }
+
+      init();
+
+      const objData = JSON.parse("{{ obj_data|escapejs }}");
       const operationsButton = document.getElementById("operations-button");
       const modalOverlay = document.getElementById("modal-overlay");
       const operationSelection = document.getElementById("operation-selection");
@@ -345,7 +748,8 @@
           case 1:
             const authorA = document.getElementById("authorA").value;
             const authorB = document.getElementById("authorB").value;
-            result = `Finding shortest path between Author ${authorA} and Author ${authorB}`;
+
+            result = `Finding shortest path between Author ${objData.orcid[authorA][0]["author_name"]} ${authorA} and Author ${objData.orcid[authorB][0]["author_name"]} ${authorB}`;
             break;
           case 2:
             const authorQueue = document.getElementById("authorQueue").value;
