@@ -23,6 +23,14 @@ class ReadExcelFile:
         self._build_lookup_dictionaries()
 
     def _build_lookup_dictionaries(self):
+        def convert_to_list(coauthors_str):
+            try:
+                # Try to evaluate the string as a list using ast.literal_eval
+                return ast.literal_eval(coauthors_str)
+            except (ValueError, SyntaxError):
+                # If the string is not a valid list, assume it's a comma-separated string and split it
+                return [author.strip() for author in coauthors_str.split("','")]
+
         # First pass: build name to ORCID mapping
         for _, row in self.df.iterrows():
             author_name = str(row['author_name'])
@@ -102,6 +110,8 @@ class ReadExcelFile:
                     
                     if coauthor_id not in self.coauthors:
                         self.coauthors[coauthor_id] = []
+
+                    record["coauthors"] = convert_to_list(row['coauthors'])
                     self.coauthors[coauthor_id].append(record)
 
     def get_data_by_id(self, id_type: str, id_value: str) -> Union[str, List[dict]]:
@@ -122,22 +132,22 @@ class ReadExcelFile:
 class initializeReader:
     def __init__(self, excel_file: str):
         self.reader = ReadExcelFile(excel_file)
-        self.orcid = self.reader.orcid
+        self.orcid = dict(sorted(self.reader.orcid.items(), key=lambda item: len(item[1]), reverse=True))
         self.doi = self.reader.doi
-        self.coauthors = self.reader.coauthors
-        self.connections = self.reader.connections
+        self.coauthors = dict(sorted(self.reader.coauthors.items(), key=lambda item: len(item[1]), reverse=True))
+        self.connections = dict(sorted(self.reader.connections.items(), key=lambda item: len(item[1]), reverse=True))
         self.name_to_orcid = self.reader.name_to_orcid
         self.orcid_to_name = self.reader.orcid_to_name  # Add this line to include the new mapping
-
 
 
 # Example usage
 if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 
+    print(obj.name_to_orcid["Rajan T. Gupta"])
 
-    print(obj.connections["0000-0001-7085-2354"])  # printing all the connections of this author (calling by orcid NO NAME)
-    exit()
+    print(obj.coauthors["Charles M Cai"][0]["coauthors"][3])  # printing all the connections of this author (calling by orcid NO NAME)
+
     print(obj.connections["Charles M Cai"])  # printing all the connections of this coauthos (calling bu name NO ORCID)
 
     # Demonstrating connections
