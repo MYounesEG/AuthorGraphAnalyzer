@@ -741,7 +741,9 @@
             break;
           case 5:
             const authorCount = document.getElementById("authorCount").value;
-            result = `Counting collaborators for Author ${authorCount}`;
+            let name = objData.orcid_to_name[authorCount];
+            let ID = objData.name_to_orcid[name];
+            result = `The counting of collaborators for Author is : ${objData.connections[ID].length}`;
             break;
           case 6:
             result = "Finding most collaborative author in the network";
