@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render
-from app.utils import initializeReader
+from utils import initializeReader
 
 def index(request):
     # Initialize the reader object (assuming the file path is correct)
@@ -15,7 +15,8 @@ def index(request):
             'author_name': obj.reader.df['author_name'].tolist(), # author_name : Dict[str:Dict[str:list]]
             'coauthors': obj.coauthors, # coauthors : Dict[str:list]
             'connections':obj.connections, # connections : Dict[str:List[str]]
-            'name_to_orcid':obj.name_to_orcid # name_to_orcid : Dict[str, str]
+            'name_to_orcid':obj.name_to_orcid, # name_to_orcid : Dict[str, str]
+            'orcid_to_name':obj.orcid_to_name
         })
     }
 

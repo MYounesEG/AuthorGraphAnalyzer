@@ -18,6 +18,7 @@ class ReadExcelFile:
         self.coauthors: Dict[str, List[dict]] = {}
         self.connections: Dict[str, List[str]] = {}
         self.name_to_orcid: Dict[str, str] = {}
+        self.orcid_to_name: Dict[str, str] = {}  # New attribute for reverse mapping
         
         self._build_lookup_dictionaries()
 
@@ -30,6 +31,10 @@ class ReadExcelFile:
             # Name to ORCID mapping (use first occurrence)
             if author_name not in self.name_to_orcid:
                 self.name_to_orcid[author_name] = orcid
+            
+            # ORCID to Name mapping (use first occurrence)
+            if orcid not in self.orcid_to_name:
+                self.orcid_to_name[orcid] = author_name
 
         # Second pass: build comprehensive connections
         for _, row in self.df.iterrows():
@@ -122,6 +127,7 @@ class initializeReader:
         self.coauthors = self.reader.coauthors
         self.connections = self.reader.connections
         self.name_to_orcid = self.reader.name_to_orcid
+        self.orcid_to_name = self.reader.orcid_to_name  # Add this line to include the new mapping
 
 
 
@@ -130,8 +136,8 @@ if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 
 
-    print(obj.connections["0000-0001-7523-0108"])  # printing all the connections of this author (calling by orcid NO NAME)
-
+    print(obj.connections["0000-0001-7085-2354"])  # printing all the connections of this author (calling by orcid NO NAME)
+    exit()
     print(obj.connections["Charles M Cai"])  # printing all the connections of this coauthos (calling bu name NO ORCID)
 
     # Demonstrating connections
@@ -156,17 +162,4 @@ if __name__ == "__main__":
     print(obj.coauthors["Mustafa R. Bashir"]) # printing all the papers that this coauthors writed with informtion (using coauthor's name)
 
     print("\n\n\n\n")
-
-    result = 0
-
-    for coauthor_name, coauthor_records in obj.coauthors.items():
-        for record in coauthor_records:
-            for orcid, orcid_records in obj.orcid.items():
-                if obj.orcid[orcid][0]["author_name"] == coauthor_name:
-                    if orcid not in record["orcid"] and obj.orcid[orcid][0]["author_name"] != record["author_name"]:
-                        print(record["orcid"])
-                        print(record["doi"])
-                        print(orcid)
-                        result += 1
-    print(f"Count of the connected authors = {result}")
 
