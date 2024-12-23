@@ -20,11 +20,15 @@
       body,
       html,
       #networkGraph {
-        user-select: none; /* Disables text selection for all elements */
+        user-select: none;
+        /* Disables text selection for all elements */
         width: 100%;
-        height: 100%; /* Ensure both html and body elements take full height */
-        margin: 0; /* Remove default margins */
-        padding: 0; /* Remove default padding */
+        height: 100%;
+        /* Ensure both html and body elements take full height */
+        margin: 0;
+        /* Remove default margins */
+        padding: 0;
+        /* Remove default padding */
         overflow: hidden;
         font-family: "Arial", sans-serif;
         background-color: var(--bg-color);
@@ -35,6 +39,7 @@
         display: block;
         cursor: grab;
       }
+
       #control-panel {
         position: absolute;
         top: 10px;
@@ -44,6 +49,7 @@
         gap: 10px;
         z-index: 10;
       }
+
       .control-btn {
         background-color: var(--node-highlight);
         color: var(--text-color);
@@ -53,9 +59,11 @@
         cursor: pointer;
         transition: transform 0.2s;
       }
+
       .control-btn:hover {
         transform: scale(1.1);
       }
+
       #info-box {
         position: absolute;
         top: 10px;
@@ -70,6 +78,7 @@
         word-wrap: break-word;
         z-index: 20;
       }
+
       .icon {
         margin-right: 8px;
       }
@@ -176,9 +185,12 @@
         font-size: 24px;
         cursor: pointer;
       }
+
       .operation-button {
-        width: 100%; /* Set all buttons to the same width */
-        max-width: 300px; /* Optional: limit the maximum width */
+        width: 100%;
+        /* Set all buttons to the same width */
+        max-width: 300px;
+        /* Optional: limit the maximum width */
         background-color: rgba(37, 99, 235, 0.5);
         border: 2px solid #2563eb;
         color: white;
@@ -187,19 +199,23 @@
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s ease;
-        box-sizing: border-box; /* Ensure padding is included in the width */
+        box-sizing: border-box;
+        /* Ensure padding is included in the width */
       }
 
       .operation-selector {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); /* Two columns */
+        grid-template-columns: repeat(2, 1fr);
+        /* Two columns */
         gap: 15px;
         justify-items: center;
       }
 
       .operation-button:last-child:nth-child(odd) {
-        grid-column: 1 / 3; /* Span across two columns */
-        justify-self: center; /* Center the button */
+        grid-column: 1 / 3;
+        /* Span across two columns */
+        justify-self: center;
+        /* Center the button */
       }
 
       .operation-button:hover {
@@ -390,10 +406,9 @@
     </div>
     <canvas id="networkGraph"></canvas>
 
-    <!-- JavaScript remains the same -->
     <script>
       function print(String) {
-        console.log(String);
+        onsole.log(String);
       }
 
       const objData = JSON.parse("{{ obj_data|escapejs }}");
@@ -409,9 +424,9 @@
 
       // Advanced configuration
       const CONFIG = {
-        NODES: 300,
+        NODES: 30,
         EDGE_THICKNESS_RANGE: [0.5, 3],
-        ZOOM_SENSITIVITY: 0.3,
+        ZOOM_SENSITIVITY: 0.2,
         MAX_ZOOM: 10000,
         MIN_ZOOM: 0.00001,
       };
@@ -502,19 +517,19 @@
               }, ${Math.random() * 0.5 + 0.5})`,
               info: `${name}
 
-            Orcid: ${ID ? ID.replace(/-/g, " - ") : "(Coauthor)"}
-            Number of articles: ${
-              ID ? objData.orcid[ID].length : objData.coauthors[name].length
-            }
-            Articles Ranking: ${
-              ID
-                ? Object.keys(objData.orcid).indexOf(ID)
-                : "(Coauthor don't write article)"
-            }
-            Collaborations Ranking: ${i + 1}
-            Properties:
-                - Size: ${nodeSize.toFixed(2)}
-                - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
+      Orcid: ${ID ? ID.replace(/-/g, " - ") : "(Coauthor)"}
+      Number of articles: ${
+        ID ? objData.orcid[ID].length : objData.coauthors[name].length
+      }
+      Articles Ranking: ${
+        ID
+          ? Object.keys(objData.orcid).indexOf(ID)
+          : "(Coauthor don't write article)"
+      }
+      Collaborations Ranking: ${i + 1}
+      Properties:
+          - Size: ${nodeSize.toFixed(2)}
+          - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
                 Math.random() * virtualHeight
               ).toFixed(2)})`,
             });
@@ -533,7 +548,6 @@
             const targetIndex = Math.floor(Math.random() * CONFIG.NODES);
             if (targetIndex !== i && !connectedIndices.has(targetIndex)) {
               connectedIndices.add(targetIndex);
-
               edges.push({
                 source: i,
                 target: targetIndex,
@@ -550,7 +564,6 @@
       }
 
       let selectedNode = null; // Variable to store the currently selected node
-
       function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
@@ -558,12 +571,21 @@
         ctx.scale(camera.zoom, camera.zoom);
         ctx.translate(-camera.x, -camera.y);
 
+        // Helper function to check if a node is connected to the selected node
+        const isNodeConnected = (nodeId) => {
+          if (!selectedNode) return false;
+          return edges.some(
+            (edge) =>
+              (edge.source === selectedNode.id && edge.target === nodeId) ||
+              (edge.target === selectedNode.id && edge.source === nodeId)
+          );
+        };
+
         // Draw edges
         edges.forEach((edge) => {
           const source = nodes[edge.source];
           const target = nodes[edge.target];
 
-          // Check if the edge is connected to the selected node
           const isConnectedToSelected =
             selectedNode &&
             (edge.source === selectedNode.id ||
@@ -593,20 +615,40 @@
             nodeRadius
           );
 
-          // Parse the original color
-          const baseColor = node.color.match(/\d+/g);
-          const r = baseColor[0],
-            g = baseColor[1],
-            b = baseColor[2];
+          let colorCoordinates;
+          // Store original color if not already stored
+          if (!node.originalColor) {
+            node.originalColor = node.color;
+          }
+
+          if (node === selectedNode) {
+            // Selected node styling
+            gradient.addColorStop(1, "white");
+            colorCoordinates = "rgb(132, 0, 0, ";
+          } else if (isNodeConnected(node.id)) {
+            // Connected node styling
+            colorCoordinates = "rgba(0, 0, 0, ";
+          } else {
+            // Normal node styling - use the node's original color
+            const baseColor = node.originalColor;
+            const colorMatch = baseColor.match(/\d+/g);
+            if (colorMatch) {
+              const [r, g, b] = colorMatch;
+              colorCoordinates = `rgba(${r}, ${g}, ${b}, `;
+            } else {
+              // Fallback color if parsing fails
+              colorCoordinates = "rgba(100, 100, 100, ";
+            }
+          }
 
           // Create a more dynamic gradient
-          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
-          gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.7)`);
-          gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.4)`);
+          gradient.addColorStop(0, colorCoordinates + "0.9)");
+          gradient.addColorStop(0.5, colorCoordinates + "0.7)");
+          gradient.addColorStop(1, colorCoordinates + "0.4)");
 
           // Outer glow effect
           ctx.shadowBlur = nodeRadius * 0.5;
-          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+          ctx.shadowColor = colorCoordinates + "0.5)";
 
           // Draw node circle with gradient
           ctx.beginPath();
@@ -623,8 +665,10 @@
           ctx.stroke();
 
           // Draw node label with enhanced typography
-          ctx.fillStyle = "white"; // High contrast label
-          ctx.font = `bold ${nodeRadius * 0.4}px 'Arial', sans-serif`;
+          ctx.fillStyle = "white";
+          ctx.font = `bold ${
+            (nodeRadius / node.label.length) * 4
+          }px 'Arial', sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(node.label, node.x, node.y);
@@ -651,16 +695,6 @@
             if (node.y < 0 || node.y > virtualHeight) node.vy *= -1;
           });
         }
-      }
-
-      // Get opposite color of the node
-      function getOppositeColor(color) {
-        const rgba = color.match(/rgba\((\d+), (\d+), (\d+), (\d+\.?\d*)\)/);
-        if (!rgba) return "white"; // If no match, return white
-        const r = 255 - parseInt(rgba[1]);
-        const g = 255 - parseInt(rgba[2]);
-        const b = 255 - parseInt(rgba[3]);
-        return `rgb(${r}, ${g}, ${b})`;
       }
 
       // Event handlers
@@ -713,6 +747,7 @@
               infoBox.style.top = `${e.clientY + 10}px`;
               infoBox.style.display = "block";
               infoBox.innerText = clickedNode.info;
+              clickedNode.color = "";
             } else {
               selectedNode = null; // Deselect if no node is clicked
               infoBox.style.display = "none";
@@ -825,19 +860,476 @@
           "flex";
       }
 
+      function calculateWeight(authors1, authors2) {
+        console.log(`\nCalculating weight between ${authors1} and ${authors2}`);
+        let weight = 0;
+
+        // Check direct connection
+        const isDirectConnection =
+          objData.coauthors[authors1]?.includes(authors2) &&
+          objData.coauthors[authors2]?.includes(authors1);
+
+        if (isDirectConnection) {
+          weight++;
+          console.log(`Direct connection found! Weight: ${weight}`);
+        } else {
+          console.log("No direct connection found");
+        }
+
+        return weight;
+      }
+
+      function dijkstra(firstNode, lastNode) {
+        console.log(`\n=== Starting Dijkstra's Algorithm ===`);
+        console.log(`Start node: ${firstNode}`);
+        console.log(`End node: ${lastNode}`);
+
+        const distances = {};
+        const previous = {};
+        const visited = new Set();
+        const priorityQueue = [];
+        let result = "";
+
+        const authors = new Set(Object.keys(objData.coauthors));
+        console.log(`Total number of authors: ${authors.size}`);
+
+        // Initialize distances
+        for (const author of authors) {
+          distances[author] = Infinity;
+          previous[author] = null;
+        }
+        distances[firstNode] = 0;
+
+        priorityQueue.push({ node: firstNode, distance: 0 });
+
+        while (priorityQueue.length > 0) {
+          console.log(`\n--- New Iteration ---`);
+          console.log(`Priority Queue before sorting:`, priorityQueue);
+
+          priorityQueue.sort((a, b) => a.distance - b.distance);
+          const { node: currentNode } = priorityQueue.shift();
+
+          console.log(`Current node: ${currentNode}`);
+          console.log(`Current distance: ${distances[currentNode]}`);
+
+          if (currentNode === lastNode) {
+            const path = constructPath(previous, lastNode);
+            console.log(`\n✅ Target node reached! Path found:`, path);
+            result += `Shortest path found: ${path.join(" -> ")}\n`;
+            return { path, result };
+          }
+
+          if (visited.has(currentNode)) {
+            console.log(`Node ${currentNode} already visited, skipping`);
+            continue;
+          }
+
+          visited.add(currentNode);
+          console.log(`Marked ${currentNode} as visited`);
+
+          // Find neighbors
+          const neighbors = new Set();
+          const currentNodeOrcid = objData.name_to_orcid[currentNode];
+          console.log(`Current node ORCID: ${currentNodeOrcid}`);
+
+          // Process connections
+          for (const [author, connections] of Object.entries(
+            objData.connections
+          )) {
+            if (
+              connections.includes(currentNode) ||
+              connections.includes(currentNodeOrcid)
+            ) {
+              neighbors.add(author);
+              console.log(`Added ${author} as neighbor (connection found)`);
+            }
+
+            if (author === currentNode) {
+              connections.forEach((connection) => {
+                const neighborName =
+                  Object.entries(objData.name_to_orcid).find(
+                    ([name, orcid]) => orcid === connection
+                  )?.[0] || connection;
+                neighbors.add(neighborName);
+                console.log(
+                  `Added ${neighborName} as neighbor (direct connection)`
+                );
+              });
+            }
+          }
+
+          console.log(`Total neighbors found: ${neighbors.size}`);
+
+          // Process each neighbor
+          for (const neighborNode of neighbors) {
+            if (!visited.has(neighborNode)) {
+              console.log(`\nProcessing neighbor: ${neighborNode}`);
+
+              const weight = calculateWeight(currentNode, neighborNode);
+              const newDistance = distances[currentNode] + weight;
+
+              console.log(
+                `Current distance to ${neighborNode}: ${distances[neighborNode]}`
+              );
+              console.log(`New potential distance: ${newDistance}`);
+
+              if (newDistance < distances[neighborNode]) {
+                console.log(`Found better path to ${neighborNode}`);
+                distances[neighborNode] = newDistance;
+                previous[neighborNode] = currentNode;
+                priorityQueue.push({
+                  node: neighborNode,
+                  distance: newDistance,
+                });
+                result += `Neighbor: ${neighborNode}, new distance: ${newDistance}\n`;
+              } else {
+                console.log(`Keeping existing path to ${neighborNode}`);
+              }
+            } else {
+              console.log(`${neighborNode} already visited, skipping`);
+            }
+          }
+        }
+
+        console.log("\n❌ No path found");
+        return { path: [], result: "No path found." };
+      }
+
+      function constructPath(previous, lastNode) {
+        console.log("\nConstructing final path...");
+        const path = [];
+        let currentNode = lastNode;
+
+        while (currentNode !== null) {
+          console.log(`Adding node to path: ${currentNode}`);
+          path.unshift(currentNode);
+          currentNode = previous[currentNode];
+        }
+
+        console.log("Final path:", path);
+        return path;
+      }
+
+      function getCoauthorArticleCountsById(id) {
+        // Initial error checking
+        if (!objData || !objData.connections || !objData.connections[id]) {
+          print(`ID ${id} not found.`);
+          return [];
+        }
+
+        const coauthors = objData.connections[id];
+        const coauthorArticleCounts = {};
+
+        coauthors.forEach((coauthorId) => {
+          const coauthorName =
+            Object.entries(objData.name_to_orcid).find(
+              ([name, orcid]) => orcid === coauthorId
+            )?.[0] || coauthorId;
+
+          // Try different name formats if the direct lookup fails
+          let articleCount = 0;
+          if (objData.coauthors[coauthorName]) {
+            articleCount = objData.coauthors[coauthorName].length;
+          } else {
+            // Try looking up variations of the name
+            const possibleNames = [
+              coauthorName,
+              coauthorName.toLowerCase(),
+              coauthorName.toUpperCase(),
+              coauthorName
+                .split(" ")
+                .map(
+                  (part) =>
+                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                )
+                .join(" "),
+              // Add more name variations if needed
+            ];
+
+            for (const nameFmt of possibleNames) {
+              if (objData.coauthors[nameFmt]) {
+                articleCount = objData.coauthors[nameFmt].length;
+                break;
+              }
+            }
+          }
+
+          coauthorArticleCounts[coauthorName] = articleCount;
+        });
+
+        // Orijinal veriler
+        const result = Object.entries(coauthorArticleCounts)
+          .map(([name, count]) => ({
+            name,
+            articleCount: count || 0, // Ensure we never return undefined
+          }))
+          .filter((entry) => entry.name && entry.name.trim() !== "") // Filter out empty names
+          .sort((a, b) => b.articleCount - a.articleCount); // Sort by article count in descending order
+
+        class Queue {
+          constructor() {
+            this.items = [];
+          }
+
+          enqueue(item) {
+            this.items.push(item);
+          }
+
+          dequeue() {
+            return this.items.shift();
+          }
+
+          isEmpty() {
+            return this.items.length === 0;
+          }
+
+          peek() {
+            return this.items[0];
+          }
+
+          size() {
+            return this.items.length;
+          }
+        }
+
+        const queue = new Queue();
+
+        result.forEach((entry) => queue.enqueue(entry));
+
+        if (queue) return queue;
+        return `No collaboration data found for Author ${id}`;
+      }
+
+      function findLongestPath(startAuthorId) {
+        let longestPath = [];
+        let maxLength = 0;
+        const visited = new Set();
+        const maxDepth = 10;
+        const pathVisited = new Set(); // Track nodes in current path for cycle detection
+        const deadEnds = new Set(); // Track nodes that lead to no valid paths
+
+        print("1 - Starting findLongestPath function");
+
+        function calculateWeight(author1, author2) {
+          print(`Calculating weight between ${author1} and ${author2}`);
+          let weight = 0;
+          if (
+            objData.connections[author1]?.includes(author2) ||
+            objData.connections[author2]?.includes(author1)
+          ) {
+            weight = 1;
+          }
+
+          if (
+            objData.coauthors[author1]?.includes(author2) ||
+            objData.coauthors[author2]?.includes(author1)
+          ) {
+            weight += 0.5;
+          }
+
+          print(`Weight calculated: ${weight}`);
+          return weight;
+        }
+
+        function getNeighbors(author) {
+          print(`2 - Getting neighbors for author: ${author}`);
+          const neighbors = new Set();
+
+          // Only process if the author isn't a known dead end
+          if (deadEnds.has(author)) {
+            print(`Author ${author} is a known dead end, skipping`);
+            return [];
+          }
+
+          if (objData.connections[author]) {
+            print(`Found ${objData.connections[author].length} connections`);
+            objData.connections[author].forEach((coauthor) => {
+              const coauthorName =
+                Object.entries(objData.name_to_orcid).find(
+                  ([name, orcid]) => orcid === coauthor
+                )?.[0] || coauthor;
+              neighbors.add(coauthorName);
+            });
+          }
+
+          if (objData.coauthors[author]) {
+            print(`Found ${objData.coauthors[author].length} coauthors`);
+            objData.coauthors[author].forEach((coauthor) => {
+              neighbors.add(coauthor);
+            });
+          }
+
+          const result = Array.from(neighbors).filter((neighbor) => {
+            // Filter out neighbors that are dead ends or have no weight connection
+            return (
+              !deadEnds.has(neighbor) && calculateWeight(author, neighbor) > 0
+            );
+          });
+
+          print(`Total valid neighbors found: ${result.length}`);
+          return result;
+        }
+
+        function explorePath(
+          currentAuthor,
+          currentPath,
+          currentLength,
+          depth = 0
+        ) {
+          print(`3 - Exploring path for ${currentAuthor} at depth ${depth}`);
+          print(`Current path: ${currentPath.join(" -> ")}`);
+          print(`Current length: ${currentLength}`);
+
+          // Early termination conditions
+          if (depth >= maxDepth) {
+            print(`Maximum depth ${maxDepth} reached, returning`);
+            return;
+          }
+
+          if (pathVisited.has(currentAuthor)) {
+            print(`Cycle detected at ${currentAuthor}, returning`);
+            return;
+          }
+
+          // Add to visited sets
+          visited.add(currentAuthor);
+          pathVisited.add(currentAuthor);
+          currentPath.push(currentAuthor);
+
+          print(
+            `Added ${currentAuthor} to path. Path is now: ${currentPath.join(
+              " -> "
+            )}`
+          );
+
+          // Update longest path if current path is longer
+          if (currentLength > maxLength) {
+            print(`New longest path found! Length: ${currentLength}`);
+            maxLength = currentLength;
+            longestPath = [...currentPath];
+            print(`New longest path: ${longestPath.join(" -> ")}`);
+          }
+
+          // Get and filter neighbors
+          const neighbors = getNeighbors(currentAuthor).filter(
+            (neighbor) => !pathVisited.has(neighbor)
+          );
+
+          print(`4 - Found ${neighbors.length} valid neighbors to explore`);
+
+          // If no valid neighbors, mark as dead end
+          if (neighbors.length === 0) {
+            print(`Marking ${currentAuthor} as dead end`);
+            deadEnds.add(currentAuthor);
+          }
+
+          // Explore each valid neighbor
+          for (const neighbor of neighbors) {
+            print(`5 - Exploring neighbor: ${neighbor}`);
+            const weight = calculateWeight(currentAuthor, neighbor);
+            if (weight > 0) {
+              // Only explore if there's a real connection
+              explorePath(
+                neighbor,
+                currentPath,
+                currentLength + weight,
+                depth + 1
+              );
+            }
+          }
+
+          // Backtrack: remove from path tracking
+          print(`6 - Backtracking: removing ${currentAuthor} from path`);
+          currentPath.pop();
+          pathVisited.delete(currentAuthor);
+          print(`Path after backtrack: ${currentPath.join(' -> ')}`);
+        }
+
+        try {
+          print("7 - Starting path exploration");
+          const initialPath = [];
+          explorePath(startAuthorId, initialPath, 0);
+          print("8 - Path exploration completed");
+          print(`Final longest path found: ${longestPath.join(" -> ")}`);
+          print(`Final length: ${maxLength}`);
+          return formatResult(longestPath, maxLength);
+        } catch (error) {
+          print("ERROR in findLongestPath:", error);
+          console.error("Error in findLongestPath:", error);
+          throw error;
+        }
+      }
+
+      function formatResult(path, length) {
+        print("9 - Formatting result");
+        const formattedPath = path
+          .map((author) => {
+            const orcidInfo = objData.orcid[author];
+            const authorName =
+              orcidInfo && orcidInfo[0]?.author_name
+                ? orcidInfo[0].author_name
+                : author;
+
+            if (author.orcid) {
+              return `${author.author_name} (${author.orcid})`;
+            }
+
+            return `${authorName} (${author})`;
+          }).join(' -> ');
+        print("10 - Result formatted");
+        return `Path length: ${length}\nPath: ${formattedPath}`;
+      }
+
+
       function executeOperation(operationNumber) {
         let result = "";
+
         switch (operationNumber) {
           case 1:
             const authorA = document.getElementById("authorA").value;
             const authorB = document.getElementById("authorB").value;
 
-            result = `Finding shortest path between Author ${objData.orcid[authorA][0]["author_name"]} ${authorA} and Author ${objData.orcid[authorB][0]["author_name"]} ${authorB}`;
+            if (!objData || !objData.orcid_to_name || !objData.orcid) {
+              result = "Invalid data structure. Please check the input.";
+              break;
+            }
+
+            nameA = objData.orcid_to_name[authorA];
+            nameB = objData.orcid_to_name[authorB];
+            if (nameA != nameB) {
+              const pathResult = dijkstra(nameA, nameB);
+
+              if (pathResult.path.length > 0) {
+                result = `Shortest path: ${pathResult.path.join(
+                  " -> "
+                )} between Author ${
+                  objData.orcid[authorA][0].author_name
+                } (${authorA}) and Author ${
+                  objData.orcid[authorB][0].author_name
+                } (${authorB})`;
+              } else {
+                result = `No path found between Author ${
+                  objData.orcid[authorA][0]?.author_name || "Unknown"
+                } (${authorA}) and Author ${
+                  objData.orcid[authorB][0]?.author_name || "Unknown"
+                } (${authorB})`;
+              }
+            }
+             else
+              result = `The IDs is for the same author, Please enter IDs for different authors`;
             break;
+
           case 2:
             const authorQueue = document.getElementById("authorQueue").value;
-            result = `Creating collaboration queue for Author ${authorQueue}`;
+
+
+            queue = getCoauthorArticleCountsById(authorQueue);
+
+            for (let i = 0; i < queue.size(); i++)
+              result += (i + 1) + "." + queue.items[i].name + "<\p><p>";
+
             break;
+
           case 3:
             const authorBST = document.getElementById("authorBST").value;
             result = `Creating Binary Search Tree and removing Author ${authorBST}`;
@@ -853,15 +1345,34 @@
             result = `The counting of collaborators for Author is : ${objData.connections[ID].length}`;
             break;
           case 6:
-            result = "Finding most collaborative author in the network";
+
+            let maxCount = 0;
+            let resultKey = "";
+
+            Object.keys(objData.connections).forEach((key) => {
+              const count = objData.connections[key].length; // Get the value (number of collaborators)
+
+              if (count > maxCount) { // Compare the value, not key.length
+                maxCount = count;
+                resultKey = key;
+              }
+            });
+
+            result = `The counting of collaborators for (${objData.orcid_to_name[resultKey]}) is : ${maxCount}`;
             break;
+
           case 7:
-            const authorLongest =
-              document.getElementById("authorLongest").value;
-            result = `Finding longest path for Author ${authorLongest}`;
+            const authorLongest = document.getElementById("authorLongest").value;
+
+            try {
+              const pathResult = findLongestPath(authorLongest);
+              result = `Finding longest path for Author ${authorLongest}:\n${pathResult}`;
+            } catch (error) {
+              console.error('Error in case 7:', error);
+              result = `Error finding longest path for Author ${authorLongest}: ${error.message}`;
+            }
             break;
         }
-
         // Display result
         resultDisplay.innerHTML = `
           <h3>Operation Result</h3>
@@ -872,7 +1383,9 @@
         inputSection.querySelectorAll(".operation-input").forEach((input) => {
           input.style.display = "none";
         });
+
       }
     </script>
   </body>
+
 </html>
