@@ -1,78 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Author Collaboration Network</title>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-      :root {
-        --bg-color: #1a1a2e;
-        --node-highlight: #16213e;
-        --edge-color: #0f3460;
-        --text-color: #e94560;
-      }
 
-      body,
-      html,
-      #networkGraph {
-        user-select: none; /* Disables text selection for all elements */
-        width: 100%;
-        height: 100%; /* Ensure both html and body elements take full height */
-        margin: 0; /* Remove default margins */
-        padding: 0; /* Remove default padding */
-        overflow: hidden;
-        font-family: "Arial", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Author Collaboration Network</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #1a1a2e;
+      --node-highlight: #16213e;
+      --edge-color: #0f3460;
+      --text-color: #e94560;
+    }
 
-      canvas {
-        display: block;
-        cursor: grab;
-      }
-      #control-panel {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 10;
-      }
-      .control-btn {
-        background-color: var(--node-highlight);
-        color: var(--text-color);
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: transform 0.2s;
-      }
-      .control-btn:hover {
-        transform: scale(1.1);
-      }
-      #info-box {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background: rgba(22, 33, 62, 0.9);
-        color: var(--text-color);
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        display: none;
-        max-width: 480px;
-        word-wrap: break-word;
-        z-index: 20;
-      }
-      .icon {
-        margin-right: 8px;
-      }
+    body,
+    html,
+    #networkGraph {
+      user-select: none;
+      /* Disables text selection for all elements */
+      width: 100%;
+      height: 100%;
+      /* Ensure both html and body elements take full height */
+      margin: 0;
+      /* Remove default margins */
+      padding: 0;
+      /* Remove default padding */
+      overflow: hidden;
+      font-family: "Arial", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    #control-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .control-btn {
+      background-color: var(--node-highlight);
+      color: var(--text-color);
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .control-btn:hover {
+      transform: scale(1.1);
+    }
+
+    #info-box {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(22, 33, 62, 0.9);
+      color: var(--text-color);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      max-width: 480px;
+      word-wrap: break-word;
+      z-index: 20;
+    }
+
+    .icon {
+      margin-right: 8px;
+    }
 
       .node {
         stroke: #fff;
@@ -104,308 +111,318 @@
         height: 100vh;
       }
 
-      #modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 100;
-        justify-content: center;
-        align-items: center;
-        animation: fadeIn 0.3s ease;
+
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
       }
 
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
+      to {
+        opacity: 1;
+      }
+    }
 
-        to {
-          opacity: 1;
-        }
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
       }
 
-      @keyframes slideIn {
-        from {
-          transform: translateY(-50px);
-          opacity: 0;
-        }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
+    @keyframes resultAnimation {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
       }
 
-      @keyframes resultAnimation {
-        from {
-          transform: scale(0.8);
-          opacity: 0;
-        }
-
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
+      to {
+        transform: scale(1);
+        opacity: 1;
       }
+    }
 
-      #modal-content {
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        padding: 30px;
-        width: 80%;
-        max-width: 600px;
-        max-height: 80%;
-        overflow-y: auto;
-        animation: slideIn 0.4s ease;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        position: relative;
-      }
+    #modal-content {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 30px;
+      width: 80%;
+      max-width: 600px;
+      max-height: 80%;
+      overflow-y: auto;
+      animation: slideIn 0.4s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
 
-      .modal-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        color: white;
-        font-size: 24px;
-        cursor: pointer;
-      }
-      .operation-button {
-        width: 100%; /* Set all buttons to the same width */
-        max-width: 300px; /* Optional: limit the maximum width */
-        background-color: rgba(37, 99, 235, 0.5);
-        border: 2px solid #2563eb;
-        color: white;
-        padding: 15px;
-        text-align: center;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-sizing: border-box; /* Ensure padding is included in the width */
-      }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
 
-      .operation-selector {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr); /* Two columns */
-        gap: 15px;
-        justify-items: center;
-      }
+    .operation-button {
+      width: 100%;
+      /* Set all buttons to the same width */
+      max-width: 300px;
+      /* Optional: limit the maximum width */
+      background-color: rgba(37, 99, 235, 0.5);
+      border: 2px solid #2563eb;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      /* Ensure padding is included in the width */
+    }
 
-      .operation-button:last-child:nth-child(odd) {
-        grid-column: 1 / 3; /* Span across two columns */
-        justify-self: center; /* Center the button */
-      }
+    .operation-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      /* Two columns */
+      gap: 15px;
+      justify-items: center;
+    }
 
-      .operation-button:hover {
-        background-color: #2563eb;
-        /* Solid blue on hover */
-        transform: scale(1.05);
-      }
+    .operation-button:last-child:nth-child(odd) {
+      grid-column: 1 / 3;
+      /* Span across two columns */
+      justify-self: center;
+      /* Center the button */
+    }
 
-      .operation-input {
-        display: none;
-        flex-direction: column;
-        animation: slideIn 0.4s ease;
-      }
+    .operation-button:hover {
+      background-color: #2563eb;
+      /* Solid blue on hover */
+      transform: scale(1.05);
+    }
 
-      .operation-input input {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        background: transparent;
-        border: 1px solid white;
-        color: white;
-        border-radius: 5px;
-      }
+    .operation-input {
+      display: none;
+      flex-direction: column;
+      animation: slideIn 0.4s ease;
+    }
 
-      .operation-input button {
-        width: 100%;
-        padding: 10px;
-        background-color: #2563eb;
-        /* Blue instead of green */
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
+    .operation-input input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: transparent;
+      border: 1px solid white;
+      color: white;
+      border-radius: 5px;
+    }
 
-      .operation-input button:hover {
-        background-color: #3b82f6;
-        /* Lighter blue on hover */
-      }
+    .operation-input button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2563eb;
+      /* Blue instead of green */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
-      #result-display {
-        display: none;
-        padding: 20px;
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 8px;
-        margin-top: 20px;
-        animation: resultAnimation 0.5s ease;
-      }
+    .operation-input button:hover {
+      background-color: #3b82f6;
+      /* Lighter blue on hover */
+    }
 
-      #result-display button {
-        background-color: #1e3a8a;
-        /* Dark blue */
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-      }
+    #result-display {
+      display: none;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      margin-top: 20px;
+      animation: resultAnimation 0.5s ease;
+    }
 
-      #result-display button:hover {
-        background-color: #2563eb;
-        /* Slightly lighter blue on hover */
-      }
-    </style>
-  </head>
+    #result-display button {
+      background-color: #1e3a8a;
+      /* Dark blue */
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-  <body>
-    <!-- Rest of the HTML remains the same as in the previous version -->
+    #result-display button:hover {
+      background-color: #2563eb;
+      /* Slightly lighter blue on hover */
+    }
+  </style>
+</head>
 
-    <div id="modal-overlay">
-      <div id="modal-content">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
+<body>
+  <!-- Rest of the HTML remains the same as in the previous version -->
 
-        <div id="operation-selection">
-          <h2>Select an Operation</h2>
-          <div class="operation-selector">
-            <div class="operation-button" onclick="showOperationInput(1)">
-              Shortest Path Between Authors
-            </div>
-            <div class="operation-button" onclick="showOperationInput(2)">
-              Author Collaboration Queue
-            </div>
-            <div class="operation-button" onclick="showOperationInput(3)">
-              Create Binary Search Tree
-            </div>
-            <div class="operation-button" onclick="showOperationInput(4)">
-              Collaborator Shortest Paths
-            </div>
-            <div class="operation-button" onclick="showOperationInput(5)">
-              Count Collaborators
-            </div>
-            <div class="operation-button" onclick="showOperationInput(6)">
-              Most Collaborative Author
-            </div>
-            <div class="operation-button" onclick="showOperationInput(7)">
-              Longest Path for Author
-            </div>
+  <div id="modal-overlay">
+    <div id="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+
+      <div id="operation-selection">
+        <h2>Select an Operation</h2>
+        <div class="operation-selector">
+          <div class="operation-button" onclick="showOperationInput(1)">
+            Shortest Path Between Authors
           </div>
-        </div>
-
-        <!-- Rest of the HTML remains the same -->
-        <div id="input-section">
-          <div id="input1" class="operation-input">
-            <h3>Shortest Path Between Authors</h3>
-            <input type="text" placeholder="Author A ID" id="authorA" />
-            <input type="text" placeholder="Author B ID" id="authorB" />
-            <button onclick="executeOperation(1)">Find Shortest Path</button>
+          <div class="operation-button" onclick="showOperationInput(2)">
+            Author Collaboration Queue
           </div>
-
-          <div id="input2" class="operation-input">
-            <h3>Author Collaboration Queue</h3>
-            <input type="text" placeholder="Author ID" id="authorQueue" />
-            <button onclick="executeOperation(2)">Create Queue</button>
+          <div class="operation-button" onclick="showOperationInput(3)">
+            Create Binary Search Tree
           </div>
-
-          <div id="input3" class="operation-input">
-            <h3>Create Binary Search Tree</h3>
-            <input
-              type="text"
-              placeholder="Author ID to Remove"
-              id="authorBST"
-            />
-            <button onclick="executeOperation(3)">Create BST</button>
+          <div class="operation-button" onclick="showOperationInput(4)">
+            Collaborator Shortest Paths
           </div>
-
-          <div id="input4" class="operation-input">
-            <h3>Collaborator Shortest Paths</h3>
-            <input type="text" placeholder="Author ID" id="authorPaths" />
-            <button onclick="executeOperation(4)">Calculate Paths</button>
+          <div class="operation-button" onclick="showOperationInput(5)">
+            Count Collaborators
           </div>
-
-          <div id="input5" class="operation-input">
-            <h3>Count Collaborators</h3>
-            <input type="text" placeholder="Author ID" id="authorCount" />
-            <button onclick="executeOperation(5)">Count Collaborators</button>
+          <div class="operation-button" onclick="showOperationInput(6)">
+            Most Collaborative Author
           </div>
-
-          <div id="input6" class="operation-input">
-            <h3>Most Collaborative Author</h3>
-            <button onclick="executeOperation(6)">
-              Find Most Collaborative
-            </button>
+          <div class="operation-button" onclick="showOperationInput(7)">
+            Longest Path for Author
           </div>
-
-          <div id="input7" class="operation-input">
-            <h3>Longest Path for Author</h3>
-            <input type="text" placeholder="Author ID" id="authorLongest" />
-            <button onclick="executeOperation(7)">Find Longest Path</button>
-          </div>
-        </div>
-
-        <div id="result-display">
-          <!-- Results will be dynamically inserted here -->
         </div>
       </div>
-    </div>
 
-    <div id="info-box"></div>
-    <div id="control-panel">
-      <button
-        id="full-screen-btn"
-        class="control-btn"
-        title="Toggle Fullscreen"
-      >
-        <i class="fas fa-expand icon"></i>Fullscreen
-      </button>
-      <button id="zoom-in-btn" class="control-btn" title="Zoom In">
-        <i class="fas fa-search-plus icon"></i>Zoom In
-      </button>
-      <button id="zoom-out-btn" class="control-btn" title="Zoom Out">
-        <i class="fas fa-search-minus icon"></i>Zoom Out
-      </button>
-      <button id="reset-btn" class="control-btn" title="Reset View">
-        <i class="fas fa-redo icon"></i>Reset
-      </button>
-      <button
-        id="pause-move-btn"
-        class="control-btn"
-        title="Pause/Resume Movement"
-      >
-        <i class="fas fa-pause icon"></i>Pause Movement
-      </button>
-      <button class="control-btn" id="operations-button">
-        <i class="fas fa-cogs icon"></i>Operations
-      </button>
-    </div>
-    <canvas id="networkGraph"></canvas>
+      <!-- Rest of the HTML remains the same -->
+      <div id="input-section">
+        <div id="input1" class="operation-input">
+          <h3>Shortest Path Between Authors</h3>
+          <input type="text" placeholder="Author A ID" id="authorA" />
+          <input type="text" placeholder="Author B ID" id="authorB" />
+          <button onclick="executeOperation(1)">Find Shortest Path</button>
+        </div>
 
-    <!-- JavaScript remains the same -->
-    <script>
+        <div id="input2" class="operation-input">
+          <h3>Author Collaboration Queue</h3>
+          <input type="text" placeholder="Author ID" id="authorQueue" />
+          <button onclick="executeOperation(2)">Create Queue</button>
+        </div>
+
+        <div id="input3" class="operation-input">
+          <h3>Create Binary Search Tree</h3>
+          <input
+           type="text"
+            placeholder="Author ID to Remove"
+             id="authorBST" />
+          <button onclick="executeOperation(3)">Create BST</button>
+        </div>
+
+        <div id="input4" class="operation-input">
+          <h3>Collaborator Shortest Paths</h3>
+          <input type="text" placeholder="Author ID" id="authorPaths" />
+          <button onclick="executeOperation(4)">Calculate Paths</button>
+        </div>
+
+        <div id="input5" class="operation-input">
+          <h3>Count Collaborators</h3>
+          <input type="text" placeholder="Author ID" id="authorCount" />
+          <button onclick="executeOperation(5)">Count Collaborators</button>
+        </div>
+
+        <div id="input6" class="operation-input">
+          <h3>Most Collaborative Author</h3>
+          <button onclick="executeOperation(6)">
+            Find Most Collaborative
+          </button>
+        </div>
+
+        <div id="input7" class="operation-input">
+          <h3>Longest Path for Author</h3>
+          <input type="text" placeholder="Author ID" id="authorLongest" />
+          <button onclick="executeOperation(7)">Find Longest Path</button>
+        </div>
+      </div>
+
+      <div id="result-display">
+        <!-- Results will be dynamically inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <div id="info-box"></div>
+  <div id="control-panel">
+    <button
+     id="full-screen-btn" 
+     class="control-btn" 
+     title="Toggle Fullscreen">
+      <i class="fas fa-expand icon"></i>Fullscreen
+    </button>
+    <button id="zoom-in-btn" class="control-btn" title="Zoom In">
+      <i class="fas fa-search-plus icon"></i>Zoom In
+    </button>
+    <button id="zoom-out-btn" class="control-btn" title="Zoom Out">
+      <i class="fas fa-search-minus icon"></i>Zoom Out
+    </button>
+    <button id="reset-btn" class="control-btn" title="Reset View">
+      <i class="fas fa-redo icon"></i>Reset
+    </button>
+    <button 
+    id="pause-move-btn" 
+    class="control-btn"
+     title="Pause/Resume Movement">
+      <i class="fas fa-pause icon"></i>Pause Movement
+    </button>
+    <button class="control-btn" id="operations-button">
+      <i class="fas fa-cogs icon"></i>Operations
+    </button>
+  </div>
+  <canvas id="networkGraph"></canvas>
+
+  <!-- JavaScript remains the same -->
+  <script>
       function print(String) {
         console.log(String);
       }
 
       const objData = JSON.parse("{{ obj_data|escapejs }}");
 
-      const canvas = document.getElementById("networkGraph");
-      const ctx = canvas.getContext("2d");
-      const infoBox = document.getElementById("info-box");
-      const fullScreenBtn = document.getElementById("full-screen-btn");
-      const zoomInBtn = document.getElementById("zoom-in-btn");
-      const zoomOutBtn = document.getElementById("zoom-out-btn");
-      const resetBtn = document.getElementById("reset-btn");
-      const pauseMoveBtn = document.getElementById("pause-move-btn"); // New button
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    function print(string) { console.log(string); }
+
+    const canvas = document.getElementById("networkGraph");
+    const ctx = canvas.getContext("2d");
+    const infoBox = document.getElementById("info-box");
+    const fullScreenBtn = document.getElementById("full-screen-btn");
+    const zoomInBtn = document.getElementById("zoom-in-btn");
+    const zoomOutBtn = document.getElementById("zoom-out-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const pauseMoveBtn = document.getElementById("pause-move-btn"); // New button
 
       // Advanced configuration
       const CONFIG = {
@@ -424,14 +441,14 @@
         initialY: 0,
       };
 
-      let camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
+    let camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
 
-      const nodes = [];
-      const edges = [];
-      let isMoving = true; // Nodes start moving by default
+    const nodes = [];
+    const edges = [];
+    let isMoving = false; // Nodes start moving by default
 
-      // Define the count of the nodes
-      const nodeCount = CONFIG.NODES;
+    // Define the count of the nodes
+    const nodeCount = CONFIG.NODES;
 
       // Generate nodes
       function generateNodes() {
@@ -523,17 +540,16 @@
         loadNodesFrom(Object.keys(objData.coauthors), nodeCount);
       }
 
-      // Generate edges
-      function generateEdges() {
-        nodes.forEach((node, i) => {
-          const connections = Math.floor(Math.random() * 4) + 3;
-          const connectedIndices = new Set();
+    // Generate edges
+    function generateEdges() {
+      nodes.forEach((node, i) => {
+        const connections = Math.floor(Math.random() * 4) + 3;
+        const connectedIndices = new Set();
 
           while (connectedIndices.size < connections) {
             const targetIndex = Math.floor(Math.random() * CONFIG.NODES);
             if (targetIndex !== i && !connectedIndices.has(targetIndex)) {
               connectedIndices.add(targetIndex);
-
               edges.push({
                 source: i,
                 target: targetIndex,
@@ -549,19 +565,19 @@
         });
       }
 
-      let selectedNode = null; // Variable to store the currently selected node
+    let selectedNode = null; // Variable to store the currently selected node
 
-      function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(camera.zoom, camera.zoom);
-        ctx.translate(-camera.x, -camera.y);
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
 
-        // Draw edges
-        edges.forEach((edge) => {
-          const source = nodes[edge.source];
-          const target = nodes[edge.target];
+      // Draw edges
+      edges.forEach((edge) => {
+        const source = nodes[edge.source];
+        const target = nodes[edge.target];
 
           // Check if the edge is connected to the selected node
           const isConnectedToSelected =
@@ -569,19 +585,19 @@
             (edge.source === selectedNode.id ||
               edge.target === selectedNode.id);
 
-          ctx.beginPath();
-          ctx.lineWidth = edge.thickness / camera.zoom;
-          ctx.strokeStyle = isConnectedToSelected
+        ctx.beginPath();
+        ctx.lineWidth = edge.thickness / camera.zoom;
+        ctx.strokeStyle = isConnectedToSelected
             ? "red"
             : "rgba(100, 100, 100, 0.5)";
-          ctx.moveTo(source.x, source.y);
-          ctx.lineTo(target.x, target.y);
-          ctx.stroke();
-        });
+        ctx.moveTo(source.x, source.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+      });
 
-        // Draw nodes with advanced styling
-        nodes.forEach((node) => {
-          const nodeRadius = node.size / camera.zoom;
+      // Draw nodes with advanced styling
+      nodes.forEach((node) => {
+        const nodeRadius = node.size / camera.zoom;
 
           // Create radial gradient for nodes
           const gradient = ctx.createRadialGradient(
@@ -608,12 +624,12 @@
           ctx.shadowBlur = nodeRadius * 0.5;
           ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
 
-          // Draw node circle with gradient
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-          ctx.shadowBlur = 0; // Reset shadow
+        // Draw node circle with gradient
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset shadow
 
           // Add a subtle inner highlight
           ctx.beginPath();
@@ -622,103 +638,103 @@
           ctx.lineWidth = nodeRadius * 0.1;
           ctx.stroke();
 
-          // Draw node label with enhanced typography
-          ctx.fillStyle = "white"; // High contrast label
-          ctx.font = `bold ${nodeRadius * 0.4}px 'Arial', sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(node.label, node.x, node.y);
+        // Draw node label with enhanced typography
+        ctx.fillStyle = "white"; // High contrast label
+        ctx.font = `bold ${nodeRadius * 0.4}px 'Arial', sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(node.label, node.x, node.y);
+      });
+
+      ctx.restore();
+      updateNodes();
+      requestAnimationFrame(render);
+    }
+
+    // Update node positions
+    function updateNodes() {
+      const virtualWidth = window.innerWidth * 1600;
+      const virtualHeight = window.innerHeight * 1600;
+
+      if (isMoving) {
+        // Only update positions if isMoving is true
+        nodes.forEach((node) => {
+          node.x += node.vx;
+          node.y += node.vy;
+
+          // Bounce off edges
+          if (node.x < 0 || node.x > virtualWidth) node.vx *= -1;
+          if (node.y < 0 || node.y > virtualHeight) node.vy *= -1;
         });
-
-        ctx.restore();
-        updateNodes();
-        requestAnimationFrame(render);
       }
+    }
 
-      // Update node positions
-      function updateNodes() {
-        const virtualWidth = window.innerWidth * 1600;
-        const virtualHeight = window.innerHeight * 1600;
+    // Get opposite color of the node
+    function getOppositeColor(color) {
+      const rgba = color.match(/rgba\((\d+), (\d+), (\d+), (\d+\.?\d*)\)/);
+      if (!rgba) return "white"; // If no match, return white
+      const r = 255 - parseInt(rgba[1]);
+      const g = 255 - parseInt(rgba[2]);
+      const b = 255 - parseInt(rgba[3]);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
 
-        if (isMoving) {
-          // Only update positions if isMoving is true
-          nodes.forEach((node) => {
-            node.x += node.vx;
-            node.y += node.vy;
+    // Event handlers
+    function setupEventHandlers() {
+      let isDragging = false;
+      let lastMouseX, lastMouseY;
+      let justClicked = false;
 
-            // Bounce off edges
-            if (node.x < 0 || node.x > virtualWidth) node.vx *= -1;
-            if (node.y < 0 || node.y > virtualHeight) node.vy *= -1;
-          });
-        }
-      }
+      canvas.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        justClicked = true;
+        canvas.style.cursor = "grabbing";
+      });
 
-      // Get opposite color of the node
-      function getOppositeColor(color) {
-        const rgba = color.match(/rgba\((\d+), (\d+), (\d+), (\d+\.?\d*)\)/);
-        if (!rgba) return "white"; // If no match, return white
-        const r = 255 - parseInt(rgba[1]);
-        const g = 255 - parseInt(rgba[2]);
-        const b = 255 - parseInt(rgba[3]);
-        return `rgb(${r}, ${g}, ${b})`;
-      }
-
-      // Event handlers
-      function setupEventHandlers() {
-        let isDragging = false;
-        let lastMouseX, lastMouseY;
-        let justClicked = false;
-
-        canvas.addEventListener("mousedown", (e) => {
-          isDragging = true;
+      canvas.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          const deltaX = (e.clientX - lastMouseX) / camera.zoom;
+          const deltaY = (e.clientY - lastMouseY) / camera.zoom;
+          camera.x -= deltaX;
+          camera.y -= deltaY;
           lastMouseX = e.clientX;
           lastMouseY = e.clientY;
-          justClicked = true;
-          canvas.style.cursor = "grabbing";
-        });
+          justClicked = false;
+            infoBox.style.display = "none";
+        }
+      });
 
-        canvas.addEventListener("mousemove", (e) => {
-          if (isDragging) {
-            const deltaX = (e.clientX - lastMouseX) / camera.zoom;
-            const deltaY = (e.clientY - lastMouseY) / camera.zoom;
-            camera.x -= deltaX;
-            camera.y -= deltaY;
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-            justClicked = false;
+      canvas.addEventListener("mouseup", (e) => {
+        isDragging = false;
+        canvas.style.cursor = "grab";
+
+        // Only trigger node selection on a clean click (no dragging)
+        if (justClicked) {
+          const scaledMouseX =
+            (e.clientX - canvas.width / 2) / camera.zoom + camera.x;
+          const scaledMouseY =
+            (e.clientY - canvas.height / 2) / camera.zoom + camera.y;
+
+          const clickedNode = nodes.find((node) => {
+            const dx = scaledMouseX - node.x;
+            const dy = scaledMouseY - node.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < node.size / camera.zoom;
+          });
+          if (clickedNode) {
+              selectedNode = clickedNode; // Store the clicked node
+            infoBox.style.left = `${e.clientX + 10}px`;
+            infoBox.style.top = `${e.clientY + 10}px`;
+            infoBox.style.display = "block";
+            infoBox.innerText = clickedNode.info;
+          } else {
+              selectedNode = null; // Deselect if no node is clicked
             infoBox.style.display = "none";
           }
-        });
-
-        canvas.addEventListener("mouseup", (e) => {
-          isDragging = false;
-          canvas.style.cursor = "grab";
-
-          // Only trigger node selection on a clean click (no dragging)
-          if (justClicked) {
-            const scaledMouseX =
-              (e.clientX - canvas.width / 2) / camera.zoom + camera.x;
-            const scaledMouseY =
-              (e.clientY - canvas.height / 2) / camera.zoom + camera.y;
-
-            const clickedNode = nodes.find((node) => {
-              const dx = scaledMouseX - node.x;
-              const dy = scaledMouseY - node.y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-              return distance < node.size / camera.zoom;
-            });
-            if (clickedNode) {
-              selectedNode = clickedNode; // Store the clicked node
-              infoBox.style.left = `${e.clientX + 10}px`;
-              infoBox.style.top = `${e.clientY + 10}px`;
-              infoBox.style.display = "block";
-              infoBox.innerText = clickedNode.info;
-            } else {
-              selectedNode = null; // Deselect if no node is clicked
-              infoBox.style.display = "none";
-            }
-          }
-        });
+        }
+      });
 
         canvas.addEventListener("wheel", (e) => {
           e.preventDefault();
@@ -735,63 +751,63 @@
             );
         });
 
-        // Fullscreen toggle
-        fullScreenBtn.addEventListener("click", () => {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-            fullScreenBtn.innerHTML =
-              '<i class="fas fa-compress icon"></i>Exit Fullscreen';
-          } else {
-            document.exitFullscreen();
-            fullScreenBtn.innerHTML =
-              '<i class="fas fa-expand icon"></i>Fullscreen';
-          }
-        });
+      // Fullscreen toggle
+      fullScreenBtn.addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+          fullScreenBtn.innerHTML =
+            '<i class="fas fa-compress icon"></i>Exit Fullscreen';
+        } else {
+          document.exitFullscreen();
+          fullScreenBtn.innerHTML =
+            '<i class="fas fa-expand icon"></i>Fullscreen';
+        }
+      });
 
-        // Zoom buttons
-        zoomInBtn.addEventListener("click", () => {
-          camera.zoom = Math.min(
-            CONFIG.MAX_ZOOM,
-            camera.zoom * (1 + CONFIG.ZOOM_SENSITIVITY)
-          );
-        });
+      // Zoom buttons
+      zoomInBtn.addEventListener("click", () => {
+        camera.zoom = Math.min(
+          CONFIG.MAX_ZOOM,
+          camera.zoom * (1 + CONFIG.ZOOM_SENSITIVITY)
+        );
+      });
 
-        zoomOutBtn.addEventListener("click", () => {
-          camera.zoom = Math.max(
-            CONFIG.MIN_ZOOM,
-            camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY)
-          );
-        });
+      zoomOutBtn.addEventListener("click", () => {
+        camera.zoom = Math.max(
+          CONFIG.MIN_ZOOM,
+          camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY)
+        );
+      });
 
-        // Reset view
-        resetBtn.addEventListener("click", () => {
-          camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
-        });
+      // Reset view
+      resetBtn.addEventListener("click", () => {
+        camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
+      });
 
-        // Pause/Resume movement button
-        pauseMoveBtn.addEventListener("click", () => {
-          isMoving = !isMoving; // Toggle movement state
-          if (isMoving) {
-            pauseMoveBtn.innerHTML =
-              '<i class="fas fa-pause icon"></i>Pause Movement'; // Change to "Pause"
-          } else {
-            pauseMoveBtn.innerHTML =
-              '<i class="fas fa-play icon"></i>Resume Movement'; // Change to "Resume"
-          }
-        });
-      }
+      // Pause/Resume movement button
+      pauseMoveBtn.addEventListener("click", () => {
+        isMoving = !isMoving; // Toggle movement state
+        if (isMoving) {
+          pauseMoveBtn.innerHTML =
+            '<i class="fas fa-pause icon"></i>Pause Movement'; // Change to "Pause"
+        } else {
+          pauseMoveBtn.innerHTML =
+            '<i class="fas fa-play icon"></i>Resume Movement'; // Change to "Resume"
+        }
+      });
+    }
 
-      // Initialize the canvas and start the animation
-      function init() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        generateNodes();
-        generateEdges();
-        setupEventHandlers();
-        render();
-      }
+    // Initialize the canvas and start the animation
+    function init() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      generateNodes();
+      generateEdges();
+      setupEventHandlers();
+      render();
+    }
 
-      init();
+    init();
 
       const operationsButton = document.getElementById("operations-button");
       const modalOverlay = document.getElementById("modal-overlay");
@@ -799,80 +815,500 @@
       const inputSection = document.getElementById("input-section");
       const resultDisplay = document.getElementById("result-display");
 
-      operationsButton.addEventListener("click", () => {
-        modalOverlay.style.display = "flex";
-        resetModal();
+    operationsButton.addEventListener("click", () => {
+      modalOverlay.style.display = "flex";
+      resetModal();
+    });
+
+    function closeModal() {
+      modalOverlay.style.display = "none";
+    }
+
+    function resetModal() {
+      operationSelection.style.display = "block";
+      inputSection.querySelectorAll(".operation-input").forEach((input) => {
+        input.style.display = "none";
       });
+      resultDisplay.style.display = "none";
+    }
 
-      function closeModal() {
-        modalOverlay.style.display = "none";
+    function showOperationInput(operationNumber) {
+      operationSelection.style.display = "none";
+      inputSection.querySelectorAll(".operation-input").forEach((input) => {
+        input.style.display = "none";
+      });
+      document.getElementById(`input${operationNumber}`).style.display =
+        "flex";
+    }
+
+    function calculateWeight(authors1, authors2) {
+    console.log(`\nCalculating weight between ${authors1} and ${authors2}`);
+    let weight = 0;
+    
+    // Check direct connection
+    const isDirectConnection = objData.coauthors[authors1]?.includes(authors2) && 
+                             objData.coauthors[authors2]?.includes(authors1);
+    
+    if (isDirectConnection) {
+        weight++;
+        console.log(`Direct connection found! Weight: ${weight}`);
+    } else {
+        console.log('No direct connection found');
+    }
+    
+    return weight;
+}
+
+function dijkstra(firstNode, lastNode) {
+    console.log(`\n=== Starting Dijkstra's Algorithm ===`);
+    console.log(`Start node: ${firstNode}`);
+    console.log(`End node: ${lastNode}`);
+    
+    const distances = {};
+    const previous = {};
+    const visited = new Set();
+    const priorityQueue = [];
+    let result = "";
+    
+    const authors = new Set(Object.keys(objData.coauthors));
+    console.log(`Total number of authors: ${authors.size}`);
+    
+    // Initialize distances
+    for (const author of authors) {
+        distances[author] = Infinity;
+        previous[author] = null;
+    }
+    distances[firstNode] = 0;
+    
+    priorityQueue.push({ node: firstNode, distance: 0 });
+    
+    while (priorityQueue.length > 0) {
+        console.log(`\n--- New Iteration ---`);
+        console.log(`Priority Queue before sorting:`, priorityQueue);
+        
+        priorityQueue.sort((a, b) => a.distance - b.distance);
+        const { node: currentNode } = priorityQueue.shift();
+        
+        console.log(`Current node: ${currentNode}`);
+        console.log(`Current distance: ${distances[currentNode]}`);
+        
+        if (currentNode === lastNode) {
+            const path = constructPath(previous, lastNode);
+            console.log(`\n✅ Target node reached! Path found:`, path);
+            result += `Shortest path found: ${path.join(' -> ')}\n`;
+            return { path, result };
+        }
+        
+        if (visited.has(currentNode)) {
+            console.log(`Node ${currentNode} already visited, skipping`);
+            continue;
+        }
+        
+        visited.add(currentNode);
+        console.log(`Marked ${currentNode} as visited`);
+        
+        // Find neighbors
+        const neighbors = new Set();
+        const currentNodeOrcid = objData.name_to_orcid[currentNode];
+        console.log(`Current node ORCID: ${currentNodeOrcid}`);
+        
+        // Process connections
+        for (const [author, connections] of Object.entries(objData.connections)) {
+            if (connections.includes(currentNode) || connections.includes(currentNodeOrcid)) {
+                neighbors.add(author);
+                console.log(`Added ${author} as neighbor (connection found)`);
+            }
+            
+            if (author === currentNode) {
+                connections.forEach(connection => {
+                    const neighborName = Object.entries(objData.name_to_orcid)
+                        .find(([name, orcid]) => orcid === connection)?.[0] || connection;
+                    neighbors.add(neighborName);
+                    console.log(`Added ${neighborName} as neighbor (direct connection)`);
+                });
+            }
+        }
+        
+        console.log(`Total neighbors found: ${neighbors.size}`);
+        
+        // Process each neighbor
+        for (const neighborNode of neighbors) {
+            if (!visited.has(neighborNode)) {
+                console.log(`\nProcessing neighbor: ${neighborNode}`);
+                
+                const weight = calculateWeight(currentNode, neighborNode);
+                const newDistance = distances[currentNode] + weight;
+                
+                console.log(`Current distance to ${neighborNode}: ${distances[neighborNode]}`);
+                console.log(`New potential distance: ${newDistance}`);
+                
+                if (newDistance < distances[neighborNode]) {
+                    console.log(`Found better path to ${neighborNode}`);
+                    distances[neighborNode] = newDistance;
+                    previous[neighborNode] = currentNode;
+                    priorityQueue.push({ node: neighborNode, distance: newDistance });
+                    result += `Neighbor: ${neighborNode}, new distance: ${newDistance}\n`;
+                } else {
+                    console.log(`Keeping existing path to ${neighborNode}`);
+                }
+            } else {
+                console.log(`${neighborNode} already visited, skipping`);
+            }
+        }
+    }
+    
+    console.log('\n❌ No path found');
+    return { path: [], result: "No path found." };
+}
+
+function constructPath(previous, lastNode) {
+    console.log('\nConstructing final path...');
+    const path = [];
+    let currentNode = lastNode;
+    
+    while (currentNode !== null) {
+        console.log(`Adding node to path: ${currentNode}`);
+        path.unshift(currentNode);
+        currentNode = previous[currentNode];
+    }
+    
+    console.log('Final path:', path);
+    return path;
+}
+
+    function getCoauthorArticleCountsById(id) {
+      // Initial error checking
+      if (!objData || !objData.connections || !objData.connections[id]) {
+        print(`ID ${id} not found.`);
+        return [];
       }
 
-      function resetModal() {
-        operationSelection.style.display = "block";
-        inputSection.querySelectorAll(".operation-input").forEach((input) => {
-          input.style.display = "none";
-        });
-        resultDisplay.style.display = "none";
-      }
+      const coauthors = objData.connections[id];
+      const coauthorArticleCounts = {};
 
-      function showOperationInput(operationNumber) {
-        operationSelection.style.display = "none";
-        inputSection.querySelectorAll(".operation-input").forEach((input) => {
-          input.style.display = "none";
-        });
-        document.getElementById(`input${operationNumber}`).style.display =
-          "flex";
-      }
+      coauthors.forEach(coauthorId => {
 
-      function executeOperation(operationNumber) {
-        let result = "";
-        switch (operationNumber) {
-          case 1:
-            const authorA = document.getElementById("authorA").value;
-            const authorB = document.getElementById("authorB").value;
+        const coauthorName = Object.entries(objData.name_to_orcid)
+          .find(([name, orcid]) => orcid === coauthorId)?.[0] || coauthorId;
 
-            result = `Finding shortest path between Author ${objData.orcid[authorA][0]["author_name"]} ${authorA} and Author ${objData.orcid[authorB][0]["author_name"]} ${authorB}`;
-            break;
-          case 2:
-            const authorQueue = document.getElementById("authorQueue").value;
-            result = `Creating collaboration queue for Author ${authorQueue}`;
-            break;
-          case 3:
-            const authorBST = document.getElementById("authorBST").value;
-            result = `Creating Binary Search Tree and removing Author ${authorBST}`;
-            break;
-          case 4:
-            const authorPaths = document.getElementById("authorPaths").value;
-            result = `Calculating shortest paths for collaborators of Author ${authorPaths}`;
-            break;
-          case 5:
-            const authorCount = document.getElementById("authorCount").value;
-            let name = objData.orcid_to_name[authorCount];
-            let ID = objData.name_to_orcid[name];
-            result = `The counting of collaborators for Author is : ${objData.connections[ID].length}`;
-            break;
-          case 6:
-            result = "Finding most collaborative author in the network";
-            break;
-          case 7:
-            const authorLongest =
-              document.getElementById("authorLongest").value;
-            result = `Finding longest path for Author ${authorLongest}`;
-            break;
+
+        // Try different name formats if the direct lookup fails
+        let articleCount = 0;
+        if (objData.coauthors[coauthorName]) {
+          articleCount = objData.coauthors[coauthorName].length;
+        } else {
+          // Try looking up variations of the name
+          const possibleNames = [
+            coauthorName,
+            coauthorName.toLowerCase(),
+            coauthorName.toUpperCase(),
+            coauthorName.split(' ').map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' '),
+            // Add more name variations if needed
+          ];
+
+          for (const nameFmt of possibleNames) {
+            if (objData.coauthors[nameFmt]) {
+              articleCount = objData.coauthors[nameFmt].length;
+              break;
+            }
+          }
         }
 
-        // Display result
-        resultDisplay.innerHTML = `
+        coauthorArticleCounts[coauthorName] = articleCount;
+      });
+
+      // Orijinal veriler
+      const result = Object.entries(coauthorArticleCounts)
+        .map(([name, count]) => ({
+          name,
+          articleCount: count || 0 // Ensure we never return undefined
+        }))
+        .filter(entry => entry.name && entry.name.trim() !== '') // Filter out empty names
+        .sort((a, b) => b.articleCount - a.articleCount); // Sort by article count in descending order
+
+      class Queue {
+        constructor() {
+          this.items = [];
+        }
+
+        enqueue(item) {
+          this.items.push(item);
+        }
+
+        dequeue() {
+          return this.items.shift();
+        }
+
+        isEmpty() {
+          return this.items.length === 0;
+        }
+
+        peek() {
+          return this.items[0];
+        }
+
+        size() {
+          return this.items.length;
+        }
+      }
+
+      const queue = new Queue();
+
+      result.forEach(entry => queue.enqueue(entry));
+
+      if (queue) return queue;
+      return `No collaboration data found for Author ${id}`;
+    }
+
+
+    function findLongestPath(startAuthorId) {
+      let longestPath = [];
+      let maxLength = 0;
+      const visited = new Set();
+      const maxDepth = 10;
+      const pathVisited = new Set(); // Track nodes in current path for cycle detection
+      const deadEnds = new Set(); // Track nodes that lead to no valid paths
+
+      print("1 - Starting findLongestPath function");
+
+      function calculateWeight(author1, author2) {
+        print(`Calculating weight between ${author1} and ${author2}`);
+        let weight = 0;
+        if (objData.connections[author1]?.includes(author2) ||
+          objData.connections[author2]?.includes(author1)) {
+          weight = 1;
+        }
+
+        if (objData.coauthors[author1]?.includes(author2) ||
+          objData.coauthors[author2]?.includes(author1)) {
+          weight += 0.5;
+        }
+
+        print(`Weight calculated: ${weight}`);
+        return weight;
+      }
+
+      function getNeighbors(author) {
+        print(`2 - Getting neighbors for author: ${author}`);
+        const neighbors = new Set();
+
+        // Only process if the author isn't a known dead end
+        if (deadEnds.has(author)) {
+          print(`Author ${author} is a known dead end, skipping`);
+          return [];
+        }
+
+        if (objData.connections[author]) {
+          print(`Found ${objData.connections[author].length} connections`);
+          objData.connections[author].forEach(coauthor => {
+            const coauthorName = Object.entries(objData.name_to_orcid)
+              .find(([name, orcid]) => orcid === coauthor)?.[0] || coauthor;
+            neighbors.add(coauthorName);
+          });
+        }
+
+        if (objData.coauthors[author]) {
+          print(`Found ${objData.coauthors[author].length} coauthors`);
+          objData.coauthors[author].forEach(coauthor => {
+            neighbors.add(coauthor);
+          });
+        }
+
+        const result = Array.from(neighbors).filter(neighbor => {
+          // Filter out neighbors that are dead ends or have no weight connection
+          return !deadEnds.has(neighbor) && calculateWeight(author, neighbor) > 0;
+        });
+
+        print(`Total valid neighbors found: ${result.length}`);
+        return result;
+      }
+
+      function explorePath(currentAuthor, currentPath, currentLength, depth = 0) {
+        print(`3 - Exploring path for ${currentAuthor} at depth ${depth}`);
+        print(`Current path: ${currentPath.join(' -> ')}`);
+        print(`Current length: ${currentLength}`);
+
+        // Early termination conditions
+        if (depth >= maxDepth) {
+          print(`Maximum depth ${maxDepth} reached, returning`);
+          return;
+        }
+
+        if (pathVisited.has(currentAuthor)) {
+          print(`Cycle detected at ${currentAuthor}, returning`);
+          return;
+        }
+
+        // Add to visited sets
+        visited.add(currentAuthor);
+        pathVisited.add(currentAuthor);
+        currentPath.push(currentAuthor);
+
+        print(`Added ${currentAuthor} to path. Path is now: ${currentPath.join(' -> ')}`);
+
+        // Update longest path if current path is longer
+        if (currentLength > maxLength) {
+          print(`New longest path found! Length: ${currentLength}`);
+          maxLength = currentLength;
+          longestPath = [...currentPath];
+          print(`New longest path: ${longestPath.join(' -> ')}`);
+        }
+
+        // Get and filter neighbors
+        const neighbors = getNeighbors(currentAuthor)
+          .filter(neighbor => !pathVisited.has(neighbor));
+
+        print(`4 - Found ${neighbors.length} valid neighbors to explore`);
+
+        // If no valid neighbors, mark as dead end
+        if (neighbors.length === 0) {
+          print(`Marking ${currentAuthor} as dead end`);
+          deadEnds.add(currentAuthor);
+        }
+
+        // Explore each valid neighbor
+        for (const neighbor of neighbors) {
+          print(`5 - Exploring neighbor: ${neighbor}`);
+          const weight = calculateWeight(currentAuthor, neighbor);
+          if (weight > 0) {  // Only explore if there's a real connection
+            explorePath(neighbor, currentPath, currentLength + weight, depth + 1);
+          }
+        }
+
+        // Backtrack: remove from path tracking
+        print(`6 - Backtracking: removing ${currentAuthor} from path`);
+        currentPath.pop();
+        pathVisited.delete(currentAuthor);
+        print(`Path after backtrack: ${currentPath.join(' -> ')}`);
+      }
+
+      try {
+        print("7 - Starting path exploration");
+        const initialPath = [];
+        explorePath(startAuthorId, initialPath, 0);
+        print("8 - Path exploration completed");
+        print(`Final longest path found: ${longestPath.join(' -> ')}`);
+        print(`Final length: ${maxLength}`);
+        return formatResult(longestPath, maxLength);
+      } catch (error) {
+        print("ERROR in findLongestPath:", error);
+        console.error('Error in findLongestPath:', error);
+        throw error;
+      }
+    }
+
+    function formatResult(path, length) {
+      print("9 - Formatting result");
+      const formattedPath = path.map(author => {
+        const orcidInfo = objData.orcid[author];
+        const authorName = orcidInfo && orcidInfo[0]?.author_name ? orcidInfo[0].author_name : author;
+
+        if (author.orcid) {
+          return `${author.author_name} (${author.orcid})`;
+        }
+
+        return `${authorName} (${author})`;
+      }).join(' -> ');
+      print("10 - Result formatted");
+      return `Path length: ${length}\nPath: ${formattedPath}`;
+    }
+
+
+    function executeOperation(operationNumber) {
+      let result = "";
+
+      switch (operationNumber) {
+        case 1:
+          const authorA = document.getElementById("authorA").value;
+          const authorB = document.getElementById("authorB").value;
+
+          if (!objData || !objData.orcid_to_name || !objData.orcid) {
+            result = "Invalid data structure. Please check the input.";
+            break;
+          }
+
+          nameA = objData.orcid_to_name[authorA];
+          nameB = objData.orcid_to_name[authorB];
+          if (nameA != nameB) {
+            const pathResult = dijkstra(nameA, nameB);
+
+            if (pathResult.path.length > 0) {
+              result = `Shortest path: ${pathResult.path.join(' -> ')} between Author ${objData.orcid[authorA][0].author_name} (${authorA}) and Author ${objData.orcid[authorB][0].author_name} (${authorB})`;
+            } else {
+              result = `No path found between Author ${objData.orcid[authorA][0]?.author_name || "Unknown"} (${authorA}) and Author ${objData.orcid[authorB][0]?.author_name || "Unknown"} (${authorB})`;
+            }
+          }
+          else
+            result = `The IDs is for the same author, Please enter IDs for different authors`;
+          break;
+
+        case 2:
+          const authorQueue = document.getElementById("authorQueue").value;
+
+
+          queue = getCoauthorArticleCountsById(authorQueue);
+
+          for (let i = 0; i < queue.size(); i++)
+            result += (i + 1) + "." + queue.items[i].name + "<\p><p>";
+
+          break;
+
+        case 3:
+          const authorBST = document.getElementById("authorBST").value;
+          result = `Creating Binary Search Tree and removing Author ${authorBST}`;
+          break;
+        case 4:
+          const authorPaths = document.getElementById("authorPaths").value;
+          result = `Calculating shortest paths for collaborators of Author ${authorPaths}`;
+          break;
+        case 5:
+          const authorCount = document.getElementById("authorCount").value;
+          let name = objData.orcid_to_name[authorCount];
+          let ID = objData.name_to_orcid[name];
+          result = `The counting of collaborators for Author is : ${objData.connections[ID].length}`;
+          break;
+        case 6:
+
+          let maxCount = 0;
+          let resultKey = "";
+
+          Object.keys(objData.connections).forEach((key) => {
+            const count = objData.connections[key].length; // Get the value (number of collaborators)
+
+            if (count > maxCount) { // Compare the value, not key.length
+              maxCount = count;
+              resultKey = key;
+            }
+          });
+
+          result = `The counting of collaborators for (${objData.orcid_to_name[resultKey]}) is : ${maxCount}`;
+          break;
+
+        case 7:
+          const authorLongest = document.getElementById("authorLongest").value;
+
+          try {
+            const pathResult = findLongestPath(authorLongest);
+            result = `Finding longest path for Author ${authorLongest}:\n${pathResult}`;
+          } catch (error) {
+            console.error('Error in case 7:', error);
+            result = `Error finding longest path for Author ${authorLongest}: ${error.message}`;
+          }
+          break;
+      }
+      // Display result
+      resultDisplay.innerHTML = `
           <h3>Operation Result</h3>
           <p>${result}</p>
           <button onclick="resetModal()">Back to Operations</button>
         `;
-        resultDisplay.style.display = "block";
-        inputSection.querySelectorAll(".operation-input").forEach((input) => {
-          input.style.display = "none";
-        });
-      }
-    </script>
-  </body>
+      resultDisplay.style.display = "block";
+      inputSection.querySelectorAll(".operation-input").forEach((input) => {
+        input.style.display = "none";
+      });
+
+    }
+  </script>
+</body>
+
 </html>
