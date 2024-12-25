@@ -1,1 +1,1 @@
-npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css && cls && python manage.py runserver
+npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css  && python manage.py collectstatic && cls && python manage.py runserver
