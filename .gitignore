@@ -1,0 +1,16 @@
+app/__pycache__/__init__.cpython-312.pyc
+app/__pycache__/urls.cpython-312.pyc
+app/__pycache__/utils.cpython-312.pyc
+app/__pycache__/views.cpython-312.pyc
+AuthorGraphAnalyzer/__pycache__/__init__.cpython-312.pyc
+AuthorGraphAnalyzer/__pycache__/settings.cpython-312.pyc
+AuthorGraphAnalyzer/__pycache__/urls.cpython-312.pyc
+AuthorGraphAnalyzer/__pycache__/wsgi.cpython-312.pyc
+templates/css/styles.css.map
+templates/css/styles.css
+app/static/app/css/styles.css.map
+app/static/app/css/styles.css
+app/__pycache__/admin.cpython-312.pyc
+app/__pycache__/apps.cpython-312.pyc
+app/__pycache__/models.cpython-312.pyc
+app/migrations/__pycache__/__init__.cpython-312.pyc

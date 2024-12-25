@@ -16,9 +16,9 @@ class ReadExcelFile:
         self.orcid: Dict[str, List[dict]] = {}
         self.doi: Dict[str, dict] = {}
         self.coauthors: Dict[str, List[dict]] = {}
-        self.connections: Dict[str, List[str]] = {}
+        self.connections: Dict[str, Dict[str, int]] = {}  # Modified to store counts
         self.name_to_orcid: Dict[str, str] = {}
-        self.orcid_to_name: Dict[str, str] = {}  # New attribute for reverse mapping
+        self.orcid_to_name: Dict[str, str] = {}
         
         self._build_lookup_dictionaries()
 
@@ -71,14 +71,11 @@ class ReadExcelFile:
             # Coauthors handling
             coauthors = row['coauthors']
             if pd.notna(coauthors):
-                # Safer parsing of coauthors
                 try:
-                    # Use ast.literal_eval for safer list parsing
                     coauthors_list = ast.literal_eval(str(coauthors)) if isinstance(coauthors, str) else coauthors
                 except:
                     coauthors_list = [coauthors]
                 
-                # Ensure coauthors_list is a list
                 if not isinstance(coauthors_list, list):
                     coauthors_list = [coauthors_list]
                 
@@ -87,22 +84,22 @@ class ReadExcelFile:
                 
                 # Update connections for each author
                 for main_author in all_authors:
-                    # Convert main author to ORCID if possible
                     main_author_id = self.name_to_orcid.get(main_author, main_author)
                     
-                    # Initialize connections for this author if not exist
+                    # Initialize connections dictionary for this author if not exist
                     if main_author_id not in self.connections:
-                        self.connections[main_author_id] = []
+                        self.connections[main_author_id] = {}
                     
-                    # Add all other authors as connections
+                    # Add all other authors as connections with counts
                     for other_author in all_authors:
                         if other_author != main_author:
-                            # Convert other author to ORCID if possible
                             other_author_id = self.name_to_orcid.get(other_author, other_author)
                             
-                            # Add to connections if not already present
-                            if other_author_id not in self.connections[main_author_id]:
-                                self.connections[main_author_id].append(other_author_id)
+                            # Increment the connection count
+                            if other_author_id in self.connections[main_author_id]:
+                                self.connections[main_author_id][other_author_id] += 1
+                            else:
+                                self.connections[main_author_id][other_author_id] = 1
                 
                 # Coauthors dictionary
                 for coauthor in all_authors:
@@ -137,14 +134,43 @@ class initializeReader:
         self.coauthors = dict(sorted(self.reader.coauthors.items(), key=lambda item: len(item[1]), reverse=True))
         self.connections = dict(sorted(self.reader.connections.items(), key=lambda item: len(item[1]), reverse=True))
         self.name_to_orcid = self.reader.name_to_orcid
-        self.orcid_to_name = self.reader.orcid_to_name  # Add this line to include the new mapping
-
+        self.orcid_to_name = self.reader.orcid_to_name
 
 # Example usage
 if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 
     print(obj.name_to_orcid["Rajan T. Gupta"])
+
+    print(obj.coauthors["Charles M Cai"][0]["coauthors"][3])  # printing all the connections of this author (calling by orcid NO NAME)
+
+    print(obj.connections["Charles M Cai"])  # printing all the connections of this coauthos (calling bu name NO ORCID)
+
+    # Demonstrating connections
+    print("Connections for each author:")
+    for author, connections in obj.connections.items():
+        print(f"{author}: {connections}")
+
+
+    # Access data by ORCID
+    print("\nData by ORCID:")
+    print(obj.orcid['0000-0003-0901-5076']) # printing all the papers that this author writed with informtion (using author id (orcid) ) 
+
+    print(obj.connections["Eun Jeon Lee"])
+    
+    print("\n\n\n\n")
+
+    # Access data by DOI
+    print("\nData by DOI:")
+    print(obj.doi['10.1021/jp209208e']) # printing the paper's informitions
+    # Access data by Author Name and get just one ORCID
+
+    print("\n\n\n\n")
+
+    print(obj.coauthors["Mustafa R. Bashir"]) # printing all the papers that this coauthors writed with informtion (using coauthor's name)
+
+    print("\n\n\n\n")
+
 
     print(obj.coauthors["Charles M Cai"][0]["coauthors"][3])  # printing all the connections of this author (calling by orcid NO NAME)
 
