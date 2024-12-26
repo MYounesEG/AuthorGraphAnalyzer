@@ -222,40 +222,62 @@ function generateCollaborationTree(authorId) {
   return treeHtml;
 }
 
+
+let maxLength = 30;
+
 function findLongestPath(connections, startId) {
+  let state=false;
   const visited = new Set();
+  
+
   let longestPath = [];
-
+  
   function dfs(currentNode, path) {
-    if (visited.has(currentNode)) return;
+    
+    if(state)
+      return path;
+    
+    if(path.length>=maxLength)
+      {state=true;return path;}
+    
+  
+    if (visited.has(currentNode)) {
+      return;
+    }
+
     visited.add(currentNode);
+  
     path.push(currentNode);
-
+  
     let isDeadEnd = true;
-
-    // Bağlı düğümleri dolaş
     for (const neighbor in connections[currentNode] || {}) {
       if (!visited.has(neighbor)) {
         isDeadEnd = false;
         dfs(neighbor, [...path]);
-      }
+      } 
     }
 
-    if (isDeadEnd && path.length > longestPath.length) {
-      longestPath = path;
+  
+    if (isDeadEnd) {
+      if (path.length > longestPath.length) {
+        longestPath = path;
+      } 
     }
 
     visited.delete(currentNode);
   }
 
   dfs(startId, []);
+
+  
   return longestPath;
 }
 
-function executeOperation(operationNumber) {
-  let result = "";
 
-  try {
+function executeOperation(operationNumber) {
+  let result = "" , name , ID;
+
+  
     switch (operationNumber) {
       case 1:
         const authorA = document.getElementById("authorA").value;
@@ -376,7 +398,7 @@ function executeOperation(operationNumber) {
         break;
       case 5:
         const IDinput = document.getElementById("authorCount").value;
-        let name = objData.orcid_to_name[IDinput]
+        name = objData.orcid_to_name[IDinput]
           ? objData.orcid_to_name[IDinput]
           : IDinput;
 
@@ -385,31 +407,39 @@ function executeOperation(operationNumber) {
         }`;
         break;
       case 6:
-        result = `The counting of collaborators for (${
+     
+
+      result = `The counting of collaborators for (${
           objData.orcid_to_name[Object.keys(objData.connections)[0]]
         }) is : ${Object.keys(Object.values(objData.connections)[0]).length}`;
         break;
 
       case 7:
+     
+
         const authorLongest = document.getElementById("authorLongest").value;
+    
+
+        if(objData.orcid[authorLongest]){
+          name = objData.orcid_to_name[authorLongest];
+          ID = objData.name_to_orcid[name];
+        }
+        else{
+          ID = name = authorLongest;
+        }
+        print(ID);
+        let longestPath = findLongestPath(objData.connections, ID);
         result = `<h3>
-            start Node: ${authorLongest}</h3><h3></h3><h3>
-            longest Path: ${findLongestPath(
-              objData.connections,
-              authorLongest
-            )}</h3><h3></h3><h3>
+            start Node: ${ID}</h3><h3></h3><h3>
+            longest Path: ${longestPath}</h3><h3></h3><h3>
             path Length: ${
-              findLongestPath(objData.connections, authorLongest).length
+            longestPath.length
             }</h3>
         `;
+
         break;
     }
-  } catch (error) {
-    console.error("Operation error:", error);
-    result = `Error executing operation: ${error.message}`;
-    }
-  
-
+    
   // Display result
   resultDisplay.innerHTML = `
     <h1>Operation Result</h1>
