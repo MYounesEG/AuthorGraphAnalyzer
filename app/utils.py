@@ -1,3 +1,4 @@
+# utils.py
 import pandas as pd
 from typing import Dict, List, Union
 import ast
@@ -140,62 +141,5 @@ class initializeReader:
 if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 
-    print(obj.name_to_orcid["Rajan T. Gupta"])
-
-    print(obj.coauthors["Charles M Cai"][0]["coauthors"][3])  # printing all the connections of this author (calling by orcid NO NAME)
-
-    print(obj.connections["Charles M Cai"])  # printing all the connections of this coauthos (calling bu name NO ORCID)
-
-    # Demonstrating connections
-    print("Connections for each author:")
-    for author, connections in obj.connections.items():
-        print(f"{author}: {connections}")
-
-
-    # Access data by ORCID
-    print("\nData by ORCID:")
-    print(obj.orcid['0000-0003-0901-5076']) # printing all the papers that this author writed with informtion (using author id (orcid) ) 
-
-    print(obj.connections["Eun Jeon Lee"])
-    
-    print("\n\n\n\n")
-
-    # Access data by DOI
-    print("\nData by DOI:")
-    print(obj.doi['10.1021/jp209208e']) # printing the paper's informitions
-    # Access data by Author Name and get just one ORCID
-
-    print("\n\n\n\n")
-
-    print(obj.coauthors["Mustafa R. Bashir"]) # printing all the papers that this coauthors writed with informtion (using coauthor's name)
-
-    print("\n\n\n\n")
-
-
-    print(obj.coauthors["Charles M Cai"][0]["coauthors"][3])  # printing all the connections of this author (calling by orcid NO NAME)
-
-    print(obj.connections["Charles M Cai"])  # printing all the connections of this coauthos (calling bu name NO ORCID)
-
-    # Demonstrating connections
-    print("Connections for each author:")
-    for author, connections in obj.connections.items():
-        print(f"{author}: {connections}")
-
-
-    # Access data by ORCID
-    print("\nData by ORCID:")
-    print(obj.orcid['0000-0003-0901-5076']) # printing all the papers that this author writed with informtion (using author id (orcid) ) 
-    
-    print("\n\n\n\n")
-
-    # Access data by DOI
-    print("\nData by DOI:")
-    print(obj.doi['10.1021/jp209208e']) # printing the paper's informitions
-    # Access data by Author Name and get just one ORCID
-
-    print("\n\n\n\n")
-
-    print(obj.coauthors["Mustafa R. Bashir"]) # printing all the papers that this coauthors writed with informtion (using coauthor's name)
-
-    print("\n\n\n\n")
+    print(obj.connections["Charles M Cai"])  
 
