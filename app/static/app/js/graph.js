@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById("networkGraph");
 const ctx = canvas.getContext("2d");
 const infoBox = document.getElementById("info-box");
@@ -7,6 +6,7 @@ const zoomInBtn = document.getElementById("zoom-in-btn");
 const zoomOutBtn = document.getElementById("zoom-out-btn");
 const resetBtn = document.getElementById("reset-btn");
 const pauseMoveBtn = document.getElementById("pause-move-btn");
+
 
 const CONFIG = {
   NODES: 30,
@@ -100,7 +100,11 @@ function generateNodes() {
           selectedColor.b
         }, ${Math.random() * 0.5 + 0.5})`,
         info: `${name}
-
+  Properties:
+  - Size: ${nodeSize.toFixed(2)}
+  - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
+          Math.random() * virtualHeight
+        ).toFixed(2)})
   Orcid: ${ID ? ID.replace(/-/g, " - ") : "(Coauthor)"}
   Number of articles: ${
     ID ? objData.orcid[ID].length : objData.coauthors[name].length
@@ -111,11 +115,14 @@ function generateNodes() {
       : "(Coauthor don't write article)"
   }
   Collaborations Ranking: ${i + 1}
-  Properties:
-      - Size: ${nodeSize.toFixed(2)}
-      - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
-          Math.random() * virtualHeight
-        ).toFixed(2)})`,
+
+
+  Articles:
+
+  ${objData.coauthors[ID ? ID : 'name']
+    .map((article, index) => `${index + 1}. ${article["paper_title"]}`)
+    .join("\n")}
+`,
       });
     }
   }
@@ -407,6 +414,5 @@ function init() {
   setupEventHandlers();
   render();
 }
-
 
 init();

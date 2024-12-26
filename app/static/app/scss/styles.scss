@@ -55,14 +55,14 @@
     --scroll-size: 15px;
     --scroll-radius: 20px;
     --scroll-track: rgb(255 255 255 / 10%);
-    --scroll-thumb: linear-gradient(45deg, #00aeff, #a68eff);
+    --scroll-thumb: linear-gradient(45deg, #e94560, #a68eff);
 }
 
 :root {
     --bg-color: #1a1a2e;
+    --text-color: #e94560;
     --node-highlight: #16213e;
     --edge-color: #0f3460;
-    --text-color: #e94560;
 }
 
 
@@ -196,7 +196,6 @@ canvas {
 .control-btn:hover {
     transform: scale(1.1);
 }
-
 #info-box {
     position: absolute;
     top: 10px;
@@ -208,9 +207,14 @@ canvas {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: none;
     max-width: 480px;
+    max-height: 300px; /* Limit the height for scrollable content */
     word-wrap: break-word;
-    z-index: 20;
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    z-index: 100; /* Ensure it's above other elements */
 }
+
+
 
 .icon {
     margin-right: 8px;

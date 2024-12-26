@@ -172,7 +172,7 @@ class Queue {
   }
 }
 
-function generateCollaborationTree(authorId, objData) {
+function generateCollaborationTree(authorId) {
   const authorName = objData.orcid_to_name[authorId] || authorId;
   const connections = objData.connections[authorId] || {};
 
@@ -296,12 +296,12 @@ function executeOperation(operationNumber) {
         break;
 
       case 3:
-        const authorTree = document.getElementById("authorTree").value;
+        const authorTree = document.getElementById("authorBST").value;
         if (!authorTree) {
           result = "Please enter an author";
           break;
         }
-        result = generateCollaborationTree(authorTree, objData);
+        result = generateCollaborationTree(authorTree);
         break;
       case 4:
         const authorPaths = document.getElementById("authorPaths").value;
@@ -372,9 +372,6 @@ function executeOperation(operationNumber) {
                     }
                     </h3>
                     ${dataTable}
-                    <p style="text-align: center; color: #64748b; margin-top: 20px;">
-                    Visualizing collaboration network and calculating shortest paths
-                    </p>
                     `;
         break;
       case 5:
@@ -410,7 +407,8 @@ function executeOperation(operationNumber) {
   } catch (error) {
     console.error("Operation error:", error);
     result = `Error executing operation: ${error.message}`;
-  }
+    }
+  
 
   // Display result
   resultDisplay.innerHTML = `
