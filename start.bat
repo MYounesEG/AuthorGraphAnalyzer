@@ -1,1 +1,1 @@
-npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css  && python manage.py collectstatic --noinput && cls && python manage.py runserver
+@echo off && npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css  && python manage.py collectstatic --noinput && cls && start python manage.py runserver && timeout /t 5 /nobreak && start http://127.0.0.1:8000

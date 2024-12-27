@@ -7,9 +7,8 @@ const zoomOutBtn = document.getElementById("zoom-out-btn");
 const resetBtn = document.getElementById("reset-btn");
 const pauseMoveBtn = document.getElementById("pause-move-btn");
 
-
 const CONFIG = {
-  NODES: 30,
+  NODES: 100,
   EDGE_THICKNESS_RANGE: [0.5, 3],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
@@ -68,14 +67,14 @@ function generateNodes() {
   function loadNodesFrom(list, count) {
     for (let i = 0; i < count; i++) {
       let key = list[i];
-      let ID, name;
+      let orcid, name;
       // loadNodesFrom(objData.connections[name]);
       if (key.match(/\d/)) {
-        ID = key;
-        name = objData.orcid_to_name[ID];
+        orcid = key;
+        name = objData.orcid_to_name[orcid];
       } else {
         name = key;
-        ID = objData.name_to_orcid[name];
+        orcid = objData.name_to_orcid[name];
       }
 
       // Randomly select a palette
@@ -89,11 +88,12 @@ function generateNodes() {
       );
 
       nodes.push({
-        id: i,
+        index: i,
+        id: orcid ? orcid : name,
         x: Math.random() * virtualWidth,
         y: Math.random() * virtualHeight,
-        vx: (Math.random() - 0.5) * 16 * 8,
-        vy: (Math.random() - 0.5) * 16 * 8,
+        vx: (Math.random() - 0.5) * 1024,
+        vy: (Math.random() - 0.5) * 1024,
         size: nodeSize,
         label: `${name}`,
         color: `rgba(${selectedColor.r}, ${selectedColor.g}, ${
@@ -105,13 +105,13 @@ function generateNodes() {
   - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
           Math.random() * virtualHeight
         ).toFixed(2)})
-  Orcid: ${ID ? ID.replace(/-/g, " - ") : "(Coauthor)"}
+  Orcid: ${orcid ? orcid.replace(/-/g, " - ") : "(Coauthor)"}
   Number of articles: ${
-    ID ? objData.orcid[ID].length : objData.coauthors[name].length
+    orcid ? objData.orcid[orcid].length : objData.coauthors[name].length
   }
   Articles Ranking: ${
-    ID
-      ? Object.keys(objData.orcid).indexOf(ID)
+    orcid
+      ? Object.keys(objData.orcid).indexOf(orcid)
       : "(Coauthor don't write article)"
   }
   Collaborations Ranking: ${i + 1}
@@ -119,8 +119,12 @@ function generateNodes() {
 
   Articles:
 
-  ${objData.coauthors[ID ? ID : 'name']
-    .map((article, index) => `${index + 1}. ${article["paper_title"]}`)
+  ${objData.coauthors[orcid ? orcid : name]
+    .map((article, index) =>
+      `${index + 1}. ${article["paper_title"]}`.length < 63
+        ? `${index + 1}. ${article["paper_title"]}`
+        : `${index + 1}. ${article["paper_title"]}`.slice(0, 55) + `....`
+    )
     .join("\n")}
 `,
       });
@@ -132,13 +136,13 @@ function generateNodes() {
 // Generate edges
 function generateEdges() {
   nodes.forEach((node, i) => {
-    const connections = Math.floor(Math.random() * 4) + 3;
-    const connectedIndices = new Set();
+    const connections = Object.keys(objData.connections[node.id]);
 
-    while (connectedIndices.size < connections) {
-      const targetIndex = Math.floor(Math.random() * CONFIG.NODES);
-      if (targetIndex !== i && !connectedIndices.has(targetIndex)) {
-        connectedIndices.add(targetIndex);
+    for (let index = 0; index < connections.length; index++) {
+      let targetIndex = nodes.findIndex(
+        (targetNode) => targetNode.id == connections[index]
+      );
+      if (targetIndex) {
         edges.push({
           source: i,
           target: targetIndex,
@@ -149,6 +153,8 @@ function generateEdges() {
             CONFIG.EDGE_THICKNESS_RANGE[0],
           weight: Math.random(),
         });
+      } else {
+        print(`${connections[index]} NOT FOUND IN NODESS !!`);
       }
     }
   });
@@ -167,28 +173,31 @@ function render() {
     if (!selectedNode) return false;
     return edges.some(
       (edge) =>
-        (edge.source === selectedNode.id && edge.target === nodeId) ||
-        (edge.target === selectedNode.id && edge.source === nodeId)
+        (edge.source === selectedNode.index && edge.target === nodeId) ||
+        (edge.target === selectedNode.index && edge.source === nodeId)
     );
   };
 
   // Draw edges
   edges.forEach((edge) => {
-    const source = nodes[edge.source];
-    const target = nodes[edge.target];
+    try {
+      const source = nodes[edge.source];
+      const target = nodes[edge.target];
 
-    const isConnectedToSelected =
-      selectedNode &&
-      (edge.source === selectedNode.id || edge.target === selectedNode.id);
+      const isConnectedToSelected =
+        selectedNode &&
+        (edge.source === selectedNode.index ||
+          edge.target === selectedNode.index);
 
-    ctx.beginPath();
-    ctx.lineWidth = edge.thickness / camera.zoom;
-    ctx.strokeStyle = isConnectedToSelected
-      ? "red"
-      : "rgba(100, 100, 100, 0.5)";
-    ctx.moveTo(source.x, source.y);
-    ctx.lineTo(target.x, target.y);
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.lineWidth = edge.thickness / camera.zoom;
+      ctx.strokeStyle = isConnectedToSelected
+        ? "red"
+        : "rgba(100, 100, 100, 0.5)";
+      ctx.moveTo(source.x, source.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+    } catch {}
   });
 
   // Draw nodes with advanced styling
@@ -213,9 +222,9 @@ function render() {
 
     if (node === selectedNode) {
       // Selected node styling
-      gradient.addColorStop(1, "white");
+      gradient.addColorStop(0.7, "blue");
       colorCoordinates = "rgb(132, 0, 0, ";
-    } else if (isNodeConnected(node.id)) {
+    } else if (isNodeConnected(node.index)) {
       // Connected node styling
       colorCoordinates = "rgba(0, 0, 0, ";
     } else {
