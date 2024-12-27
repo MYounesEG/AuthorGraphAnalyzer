@@ -1,14 +1,5 @@
-const canvas = document.getElementById("networkGraph");
-const ctx = canvas.getContext("2d");
-const infoBox = document.getElementById("info-box");
-const fullScreenBtn = document.getElementById("full-screen-btn");
-const zoomInBtn = document.getElementById("zoom-in-btn");
-const zoomOutBtn = document.getElementById("zoom-out-btn");
-const resetBtn = document.getElementById("reset-btn");
-const pauseMoveBtn = document.getElementById("pause-move-btn");
-
 const CONFIG = {
-  NODES: 100,
+  NODES: 500,
   EDGE_THICKNESS_RANGE: [0.5, 3],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
@@ -22,6 +13,167 @@ let defultCameraSettings = {
   initialX: 0,
   initialY: 0,
 };
+
+// Global variables for path visualization
+let pathNodes = [];
+let pathEdges = [];
+let startNode = null;
+let endNode = null;
+let selectedNode = null;
+
+// Helper functions
+function isPathEdge(edge) {
+  return pathEdges && pathEdges.includes(edge);
+}
+
+function getNodePathStatus(node) {
+  if (node === startNode || node === endNode) {
+    return "endpoint";
+  } else if (pathNodes && pathNodes.includes(node)) {
+    return "path";
+  }
+  return "normal";
+}
+
+function clearPathVisualization() {
+  pathNodes = [];
+  pathEdges = [];
+  startNode = null;
+  endNode = null;
+}
+
+function showPathGraph(authorPath = null) {
+  // Clear any existing path visualization
+  clearPathVisualization();
+
+  // If no path is provided or path is invalid, just clear and return
+  if (!authorPath && !pathResult?.path) {
+    print("No path provided");
+    return;
+  }
+
+  // Use provided path or pathResult.path
+  const path = authorPath || pathResult.path;
+
+  if (path.length < 2) {
+    print("Path must contain at least 2 nodes");
+    return;
+  }
+
+  // Process each node in the path
+  for (let i = 0; i < path.length; i++) {
+    const currentId = path[i];
+
+    // Find the node in our nodes array
+    const currentNode = nodes.find((node) => node.id === currentId);
+
+    if (!currentNode) {
+      console.error(`Node not found for ID: ${currentId}`);
+      continue;
+    }
+
+    // Add node to path nodes
+    pathNodes.push(currentNode);
+
+    // Set start and end nodes
+    if (i === 0) {
+      startNode = currentNode;
+    } else if (i === path.length - 1) {
+      endNode = currentNode;
+    }
+
+    // Find and store edges between consecutive nodes
+    if (i < path.length - 1) {
+      const nextId = path[i + 1];
+
+      // Find the edge connecting current node to next node
+      const pathEdge = edges.find((edge) => {
+        const sourceNode = nodes[edge.source];
+        const targetNode = nodes[edge.target];
+
+        // Check both directions of the edge
+        try {
+          return (
+            (sourceNode.id === currentId && targetNode.id === nextId) ||
+            (sourceNode.id === nextId && targetNode.id === currentId)
+          );
+        } catch {
+          return null;
+        }
+      });
+
+      if (pathEdge) {
+        pathEdges.push(pathEdge);
+      } else {
+        console.warn(`No edge found between ${currentId} and ${nextId}`);
+      }
+    }
+  }
+
+  // Log path information for debugging
+  print(`Path visualization set up:
+    - Total nodes in path: ${pathNodes.length}
+    - Total edges in path: ${pathEdges.length}
+    - Start node: ${startNode?.label}
+    - End node: ${endNode?.label}`);
+
+  // Pause node movement to make path more visible
+  isMoving = false;
+  if (pauseMoveBtn) {
+    pauseMoveBtn.innerHTML = '<i class="fas fa-play icon"></i>Resume Movement';
+  }
+
+  // Center camera on path
+  if (pathNodes.length > 0) {
+    centerCameraOnPath();
+  }
+  closeModal();
+}
+
+// Helper function to center the camera on the path
+function centerCameraOnPath() {
+  if (pathNodes.length === 0) return;
+
+  // Calculate the bounding box of the path
+  let minX = Infinity,
+    minY = Infinity;
+  let maxX = -Infinity,
+    maxY = -Infinity;
+
+  pathNodes.forEach((node) => {
+    minX = Math.min(minX, node.x);
+    minY = Math.min(minY, node.y);
+    maxX = Math.max(maxX, node.x);
+    maxY = Math.max(maxY, node.y);
+  });
+
+  // Calculate center point of the path
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  // Calculate required zoom level
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const padding = 200; // Add some padding around the path
+
+  const zoomX = canvas.width / (width + padding);
+  const zoomY = canvas.height / (height + padding);
+  const newZoom = Math.min(zoomX, zoomY);
+
+  // Update camera position and zoom
+  camera.x = centerX;
+  camera.y = centerY;
+  camera.zoom = Math.max(Math.min(newZoom, CONFIG.MAX_ZOOM), CONFIG.MIN_ZOOM);
+}
+
+const canvas = document.getElementById("networkGraph");
+const ctx = canvas.getContext("2d");
+const infoBox = document.getElementById("info-box");
+const fullScreenBtn = document.getElementById("full-screen-btn");
+const zoomInBtn = document.getElementById("zoom-in-btn");
+const zoomOutBtn = document.getElementById("zoom-out-btn");
+const resetBtn = document.getElementById("reset-btn");
+const pauseMoveBtn = document.getElementById("pause-move-btn");
 
 let camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
 
@@ -65,6 +217,9 @@ function generateNodes() {
     ],
   ];
   function loadNodesFrom(list, count) {
+    let Xmode = 0,
+      Ymode = 1;
+
     for (let i = 0; i < count; i++) {
       let key = list[i];
       let orcid, name;
@@ -87,13 +242,15 @@ function generateNodes() {
         120
       );
 
+      Xmode += 1;
+      Ymode += 1;
       nodes.push({
         index: i,
         id: orcid ? orcid : name,
         x: Math.random() * virtualWidth,
         y: Math.random() * virtualHeight,
-        vx: (Math.random() - 0.5) * 1024,
-        vy: (Math.random() - 0.5) * 1024,
+        vx: 2024 * (Xmode % 3 ? 1 : -1),
+        vy: 2024 * (Ymode % 3 ? 1 : -1),
         size: nodeSize,
         label: `${name}`,
         color: `rgba(${selectedColor.r}, ${selectedColor.g}, ${
@@ -160,7 +317,6 @@ function generateEdges() {
   });
 }
 
-let selectedNode = null; // Variable to store the currently selected node
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -177,8 +333,8 @@ function render() {
         (edge.target === selectedNode.index && edge.source === nodeId)
     );
   };
-
-  // Draw edges
+  // In your edges drawing section:
+  let afterEdges = [];
   edges.forEach((edge) => {
     try {
       const source = nodes[edge.source];
@@ -189,15 +345,35 @@ function render() {
         (edge.source === selectedNode.index ||
           edge.target === selectedNode.index);
 
+      // Add this condition for path edges
+      const isEdgeInPath = isPathEdge(edge);
+
+      if (!isEdgeInPath) {
+        ctx.strokeStyle = isEdgeInPath
+          ? "red"
+          : isConnectedToSelected
+          ? "red"
+          : "rgba(100, 100, 100, 0.5)";
+        ctx.beginPath();
+        ctx.lineWidth = edge.thickness / camera.zoom;
+        ctx.moveTo(source.x, source.y);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+      } else {
+        afterEdges.push(edge);
+      }
+    } catch {}
+    afterEdges.forEach((edge) => {
+      const source = nodes[edge.source];
+      const target = nodes[edge.target];
+
+      ctx.strokeStyle = "red";
       ctx.beginPath();
       ctx.lineWidth = edge.thickness / camera.zoom;
-      ctx.strokeStyle = isConnectedToSelected
-        ? "red"
-        : "rgba(100, 100, 100, 0.5)";
       ctx.moveTo(source.x, source.y);
       ctx.lineTo(target.x, target.y);
       ctx.stroke();
-    } catch {}
+    });
   });
 
   // Draw nodes with advanced styling
@@ -220,10 +396,19 @@ function render() {
       node.originalColor = node.color;
     }
 
+    const nodePathStatus = getNodePathStatus(node);
+
     if (node === selectedNode) {
       // Selected node styling
       gradient.addColorStop(0.7, "blue");
       colorCoordinates = "rgb(132, 0, 0, ";
+    } else if (nodePathStatus === "endpoint") {
+      gradient.addColorStop(0.7, "green");
+      // Start/end node styling
+      colorCoordinates = "rgb(255, 0, 0, ";
+    } else if (nodePathStatus === "path") {
+      // Path node styling
+      colorCoordinates = "rgb(0, 0, 0, ";
     } else if (isNodeConnected(node.index)) {
       // Connected node styling
       colorCoordinates = "rgba(0, 0, 0, ";
@@ -235,7 +420,6 @@ function render() {
         const [r, g, b] = colorMatch;
         colorCoordinates = `rgba(${r}, ${g}, ${b}, `;
       } else {
-        // Fallback color if parsing fails
         colorCoordinates = "rgba(100, 100, 100, ";
       }
     }
@@ -329,6 +513,11 @@ function setupEventHandlers() {
 
     // Only trigger node selection on a clean click (no dragging)
     if (justClicked) {
+      startNode = null;
+      endNode = null;
+      pathNodes = [];
+      pathEdges = [];
+
       const scaledMouseX =
         (e.clientX - canvas.width / 2) / camera.zoom + camera.x;
       const scaledMouseY =

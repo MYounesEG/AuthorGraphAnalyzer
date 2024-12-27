@@ -1,4 +1,3 @@
-# utils.py
 import pandas as pd
 from typing import Dict, List, Union
 import ast
@@ -137,7 +136,8 @@ class initializeReader:
         self.name_to_orcid = self.reader.name_to_orcid
         self.orcid_to_name = self.reader.orcid_to_name
 
-# Example usage
+
+
 if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 

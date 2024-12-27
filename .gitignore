@@ -164,3 +164,4 @@ staticfiles/app/scss/styles.scss
 /staticfiles/
 /__pycache__/
 app/Dataset.xlsx
+app/~$Dataset.xlsx

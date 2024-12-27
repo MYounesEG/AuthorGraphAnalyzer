@@ -1,6 +1,4 @@
-
 const print = (message) => console.log(message);
-
 
 // DOM Elements
 const operationsButton = document.getElementById("operations-button");
@@ -62,73 +60,61 @@ function calculateWeight(author1, author2, objData) {
   return weight;
 }
 
-function dijkstra(startNode, endNode, objData) {
-  // Normalize input nodes
-  const start = objData.name_to_orcid[startNode] || startNode;
-  const end = objData.name_to_orcid[endNode] || endNode;
-
-  // Initialize data structures
+function dijkstra(startNode, endNode) {
   const distances = {};
   const previous = {};
   const unvisited = new Set();
 
-  // Initialize all distances
-  Object.keys(objData.connections).forEach((author) => {
-    distances[author] = Infinity;
-    previous[author] = null;
-    unvisited.add(author);
+  // Initialize distances
+  Object.keys(objData.connections).forEach((node) => {
+    distances[node] = Infinity;
+    previous[node] = null;
+    unvisited.add(node);
   });
-
-  distances[start] = 0;
+  distances[startNode] = 0;
 
   while (unvisited.size > 0) {
-    // Find unvisited node with smallest distance
-    let current = Array.from(unvisited).reduce(
-      (min, node) => (distances[node] < distances[min] ? node : min),
-      Array.from(unvisited)[0]
+    // Find node with minimum distance
+    let current = Array.from(unvisited).reduce((min, node) =>
+      distances[node] < distances[min] ? node : min
     );
 
-    if (current === end || distances[current] === Infinity) {
-      break;
-    }
-
+    if (current === endNode) break;
     unvisited.delete(current);
 
-    // Process neighbors
-    Object.keys(objData.connections[current] || {}).forEach((neighbor) => {
-      if (unvisited.has(neighbor)) {
-        const weight = calculateWeight(current, neighbor, objData);
-        const newDistance = distances[current] + weight;
+    // Get all connections for current node
+    const neighbors = objData.connections[current];
+    if (!neighbors) continue;
 
-        if (newDistance < distances[neighbor]) {
-          distances[neighbor] = newDistance;
-          previous[neighbor] = current;
-        }
+    Object.entries(neighbors).forEach(([neighbor, weight]) => {
+      if (!unvisited.has(neighbor)) return;
+
+      // Weight is inverse of collaboration count (more collaborations = shorter path)
+      const edgeWeight = 1 / weight;
+      const distance = distances[current] + edgeWeight;
+
+      if (distance < distances[neighbor]) {
+        distances[neighbor] = distance;
+        previous[neighbor] = current;
       }
     });
   }
 
-  // Construct path
+  // Reconstruct path
   const path = [];
-  let current = end;
-
-  if (previous[current] === null && current !== start) {
-    return {
-      path: [],
-      distance: Infinity,
-      error: "No path found between the authors.",
-    };
-  }
-
+  let current = endNode;
   while (current !== null) {
-    path.unshift(objData.orcid_to_name[current] || current);
+    path.unshift(current);
     current = previous[current];
   }
 
+  const pathQueue = new Queue();
+  path.forEach((entry) => pathQueue.enqueue(entry));
+
   return {
+    pathQueue,
     path,
-    distance: distances[end],
-    error: null,
+    distance: distances[endNode],
   };
 }
 
@@ -222,46 +208,105 @@ function generateCollaborationTree(authorId) {
   return treeHtml;
 }
 
+function createDataTable(authorPaths) {
+  let authorName, authorID;
+  if (objData.orcid_to_name[authorPaths]) {
+    authorName = objData.orcid_to_name[authorPaths];
+    authorID = authorPaths;
+  } else {
+    authorName = authorPaths;
+    authorID = authorPaths;
+  }
+
+  dataTable = `
+            <h2>Author Article Count</h2>
+            <table id="authorTable">
+            <thead>
+            <tr>
+                <th>Author Name</th>
+                <th>Count of Articles</th>
+            </tr>
+            </thead>
+            <tbody>`;
+
+  for (const [connectionID, articleCount] of Object.entries(
+    objData.connections[authorID]
+  )) {
+    dataTable += `
+            <tr>
+              <td>${authorName}  -  ${
+      objData.orcid_to_name[connectionID]
+        ? objData.orcid_to_name[connectionID]
+        : connectionID
+    }</td>
+              <td>${articleCount}</td>
+            </tr>`;
+  }
+  for (const [connectionID, subConnections] of Object.entries(
+    objData.connections[authorID]
+  )) {
+    for (const [subConnectionID, subArticleCount] of Object.entries(
+      objData.connections[connectionID]
+    )) {
+      dataTable += `
+            <tr>
+            <td>${
+              objData.orcid_to_name[connectionID]
+                ? objData.orcid_to_name[connectionID]
+                : connectionID
+            } - ${
+        objData.orcid_to_name[subConnectionID]
+          ? objData.orcid_to_name[subConnectionID]
+          : subConnectionID
+      }</td>
+            <td>${subArticleCount}</td>
+            </tr>`;
+    }
+  }
+
+  dataTable += `
+        </tbody>
+        </table>`;
+
+  return dataTable;
+}
 
 let maxLength = 30;
 
 function findLongestPath(connections, startId) {
-  let state=false;
+  let state = false;
   const visited = new Set();
-  
 
   let longestPath = [];
-  
+
   function dfs(currentNode, path) {
-    
-    if(state)
+    if (state) return path;
+
+    if (path.length >= maxLength) {
+      state = true;
       return path;
-    
-    if(path.length>=maxLength)
-      {state=true;return path;}
-    
-  
+    }
+
     if (visited.has(currentNode)) {
       return;
     }
 
     visited.add(currentNode);
-  
+
     path.push(currentNode);
-  
+
     let isDeadEnd = true;
     for (const neighbor in connections[currentNode] || {}) {
       if (!visited.has(neighbor)) {
         isDeadEnd = false;
         dfs(neighbor, [...path]);
-      } 
+      }
     }
 
-  
     if (isDeadEnd) {
       if (path.length > longestPath.length) {
         longestPath = path;
-      } 
+      }
     }
 
     visited.delete(currentNode);
@@ -269,125 +314,82 @@ function findLongestPath(connections, startId) {
 
   dfs(startId, []);
 
-  
   return longestPath;
 }
-
-
+let pathResult;
 function executeOperation(operationNumber) {
-  let result = "" , name , ID;
+  let result = "",
+    name,
+    ID;
 
-  
-    switch (operationNumber) {
-      case 1:
-        const authorA = document.getElementById("authorA").value;
-        const authorB = document.getElementById("authorB").value;
+  switch (operationNumber) {
+    case 1:
+      let nameA,nameB,orcidA,orcidB;
+      let authorA = document.getElementById("authorA").value;
+      let authorB = document.getElementById("authorB").value;
 
-        if (!authorA || !authorB) {
-          result = "Please enter both authors";
-          break;
-        }
-
-        if (authorA === authorB) {
-          result = "Please enter two different authors";
-          break;
-        }
-
-        const pathResult = dijkstra(authorA, authorB, objData);
-        result =
-          pathResult.error ||
-          `Shortest path found:\n${pathResult.path.join(" -> ")}\nDistance: ${
-            pathResult.distance
-          }`;
+      if (!authorA || !authorB) {
+        result = "Please enter both authors";
         break;
+      }
 
-      case 2:
-        const authorQueue = document.getElementById("authorQueue").value;
-        if (!authorQueue) {
-          result = "Please enter an author";
-          break;
-        }
-
-        const queue = getCoauthorArticleCounts(authorQueue, objData);
-        result = queue.items
-          .map(
-            (item, i) =>
-              `${i + 1}. ${item.name} (${item.articleCount} articles)`
-          )
-          .join("<br>");
+      if (authorA === authorB) {
+        result = "Please enter two different authors";
         break;
+      }
+      if (objData.orcid[authorA]) {
+        orcidA = authorA;
+        nameA = objData.orcid_to_name[authorA];
+        authorA = objData.name_to_orcid[nameA];
+      } else nameA = authorA;
 
-      case 3:
-        const authorTree = document.getElementById("authorBST").value;
-        if (!authorTree) {
-          result = "Please enter an author";
-          break;
-        }
-        result = generateCollaborationTree(authorTree);
+      if (objData.orcid[authorB]) {
+        orcidB = authorB;
+        nameB = objData.orcid_to_name[authorB];
+        authorB = objData.name_to_orcid[nameB];
+      } else nameB = authorB;
+
+      pathResult = dijkstra(authorA, authorB);
+      result =
+        pathResult.error ||
+        `Shortest path found between <span style="color:#01FEE5;font-size=large;">${nameA}</span> and <span style="color:#01FEE5;font-size=large;">${nameB}</span> :<p>${pathResult.path.join(" -> ")}</p><p>\nDistance: ${
+          pathResult.distance
+        }</p>
+        <p></p>
+        <button onclick="showPathGraph()" class="mt-4">Show the path in Network Graph</button>
+        <p></p>
+        `;
+      break;
+
+    case 2:
+      const queueOrder = document.getElementById("authorQueue").value;
+      if (!queueOrder) {
+        result = "Please enter an author";
         break;
-      case 4:
-        const authorPaths = document.getElementById("authorPaths").value;
+      }
 
-        const root = authorPaths;
-        let authorName, authorID;
-        if (objData.orcid_to_name[authorPaths]) {
-          authorName = objData.orcid_to_name[authorPaths];
-          authorID = authorPaths;
-        } else {
-          authorName = authorPaths;
-          authorID = authorPaths;
-        }
+      const authorQueue = getCoauthorArticleCounts(queueOrder, objData);
+      result = authorQueue.items
+        .map(
+          (item, i) => `${i + 1}. ${item.name} (${item.articleCount} articles)`
+        )
+        .join("<br>");
+      break;
 
-        dataTable = `
-                <h2>Author Article Count</h2>
-                <table id="authorTable">
-                <thead>
-                <tr>
-                    <th>Author Name</th>
-                    <th>Count of Articles</th>
-                </tr>
-                </thead>
-                <tbody>`;
-        for (const [connectionID, articleCount] of Object.entries(
-          objData.connections[authorID]
-        )) {
-          dataTable += `
-                  <tr>
-                    <td>${authorName}  -  ${
-            objData.orcid_to_name[connectionID]
-              ? objData.orcid_to_name[connectionID]
-              : connectionID
-          }</td>
-                    <td>${articleCount}</td>
-                  </tr>`;
-        }
-        for (const [connectionID, subConnections] of Object.entries(
-          objData.connections[authorID]
-        )) {
-          for (const [subConnectionID, subArticleCount] of Object.entries(
-            objData.connections[connectionID]
-          )) {
-            dataTable += `
-                  <tr>
-                  <td>${
-                    objData.orcid_to_name[connectionID]
-                      ? objData.orcid_to_name[connectionID]
-                      : connectionID
-                  } - ${
-              objData.orcid_to_name[subConnectionID]
-                ? objData.orcid_to_name[subConnectionID]
-                : subConnectionID
-            }</td>
-                  <td>${subArticleCount}</td>
-                  </tr>`;
-          }
-        }
+    case 3:
+      const authorTree = document.getElementById("authorBST").value;
+      if (!authorTree) {
+        result = "Please enter an author";
+        break;
+      }
+      result = generateCollaborationTree(authorTree);
+      break;
+    case 4:
+      const authorPaths = document.getElementById("authorPaths").value;
 
-        dataTable += `
-              </tbody>
-              </table>`;
+      const dataTable = createDataTable(authorPaths);
 
-        result = `
+      result = `
                     <h3 style="color: #1e40af; font-size: 1.5em; margin-bottom: 20px; text-align: center;">
                     Collaboration Network for ${
                       objData.orcid_to_name[authorPaths] || authorPaths
@@ -395,51 +397,42 @@ function executeOperation(operationNumber) {
                     </h3>
                     ${dataTable}
                     `;
-        break;
-      case 5:
-        const IDinput = document.getElementById("authorCount").value;
-        name = objData.orcid_to_name[IDinput]
-          ? objData.orcid_to_name[IDinput]
-          : IDinput;
+      break;
+    case 5:
+      const IDinput = document.getElementById("authorCount").value;
+      name = objData.orcid_to_name[IDinput]
+        ? objData.orcid_to_name[IDinput]
+        : IDinput;
 
-        result = `The counting of collaborators for ${name} is : ${
-          Object.keys(objData.connections[IDinput]).length
-        }`;
-        break;
-      case 6:
-     
-
+      result = `The counting of collaborators for ${name} is : ${
+        Object.keys(objData.connections[IDinput]).length
+      }`;
+      break;
+    case 6:
       result = `The counting of collaborators for (${
-          objData.orcid_to_name[Object.keys(objData.connections)[0]]
-        }) is : ${Object.keys(Object.values(objData.connections)[0]).length}`;
-        break;
+        objData.orcid_to_name[Object.keys(objData.connections)[0]]
+      }) is : ${Object.keys(Object.values(objData.connections)[0]).length}`;
+      break;
+    case 7:
+      const authorLongest = document.getElementById("authorLongest").value;
 
-      case 7:
-     
-
-        const authorLongest = document.getElementById("authorLongest").value;
-    
-
-        if(objData.orcid[authorLongest]){
-          name = objData.orcid_to_name[authorLongest];
-          ID = objData.name_to_orcid[name];
-        }
-        else{
-          ID = name = authorLongest;
-        }
-        print(ID);
-        let longestPath = findLongestPath(objData.connections, ID);
-        result = `<h3>
+      if (objData.orcid[authorLongest]) {
+        name = objData.orcid_to_name[authorLongest];
+        ID = objData.name_to_orcid[name];
+      } else {
+        ID = name = authorLongest;
+      }
+      print(ID);
+      let longestPath = findLongestPath(objData.connections, ID);
+      result = `<h3>
             start Node: ${ID}</h3><h3></h3><h3>
             longest Path: ${longestPath}</h3><h3></h3><h3>
-            path Length: ${
-            longestPath.length
-            }</h3>
+            path Length: ${longestPath.length}</h3>
         `;
 
-        break;
-    }
-    
+      break;
+  }
+
   // Display result
   resultDisplay.innerHTML = `
     <h1>Operation Result</h1>
