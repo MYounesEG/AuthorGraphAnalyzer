@@ -1,6 +1,6 @@
 const CONFIG = {
-  NODES: 500,
-  EDGE_THICKNESS_RANGE: [0.5, 3],
+  NODES: 20,
+  EDGE_THICKNESS_RANGE: [0.1, 0.75],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
   MIN_ZOOM: 0.00001,
@@ -43,6 +43,7 @@ function clearPathVisualization() {
 }
 
 function showPathGraph(authorPath = null) {
+  selectedNode = null
   // Clear any existing path visualization
   clearPathVisualization();
 
@@ -59,8 +60,19 @@ function showPathGraph(authorPath = null) {
     print("Path must contain at least 2 nodes");
     return;
   }
+  for(let i=0;i<path.length;i++)
+  if(!nodes.find((node) => node.id === path[i]))
+    nodesList.push(path[i]);
 
-  // Process each node in the path
+  { //reinitialize the network graph 
+
+    cancelAnimationFrame(animationFrameId);    // stop init();
+
+    init();                                    // then start it again ;)
+
+  }
+
+  // Process each node in the path  
   for (let i = 0; i < path.length; i++) {
     const currentId = path[i];
 
@@ -69,7 +81,7 @@ function showPathGraph(authorPath = null) {
 
     if (!currentNode) {
       console.error(`Node not found for ID: ${currentId}`);
-      continue;
+        continue;
     }
 
     // Add node to path nodes
@@ -184,110 +196,113 @@ let isMoving = true; // Nodes start moving by default
 // Define the count of the nodes
 const nodeCount = CONFIG.NODES;
 
-// Generate nodes
-function generateNodes() {
-  const virtualWidth = window.innerWidth * 1600;
-  const virtualHeight = window.innerHeight * 1600;
 
-  // Color palettes for more interesting color generation
-  const colorPalettes = [
-    // Vibrant palette
-    [
-      { r: 255, g: 99, b: 72 }, // Coral Red
-      { r: 64, g: 194, b: 230 }, // Sky Blue
-      { r: 255, g: 166, b: 43 }, // Bright Orange
-      { r: 95, g: 39, b: 205 }, // Deep Purple
-      { r: 50, g: 200, b: 120 }, // Emerald Green
-    ],
-    // Pastel palette
-    [
-      { r: 255, g: 179, b: 186 }, // Soft Pink
-      { r: 255, g: 223, b: 186 }, // Peach
-      { r: 255, g: 255, b: 186 }, // Pale Yellow
-      { r: 186, g: 255, b: 201 }, // Mint Green
-      { r: 186, g: 225, b: 255 }, // Soft Blue
-    ],
-    // Earth tones
-    [
-      { r: 138, g: 97, b: 57 }, // Brown
-      { r: 75, g: 83, b: 32 }, // Olive Green
-      { r: 202, g: 164, b: 114 }, // Tan
-      { r: 100, g: 149, b: 237 }, // Cornflower Blue
-      { r: 188, g: 143, b: 143 }, // Rosy Brown
-    ],
-  ];
-  function loadNodesFrom(list, count) {
-    let Xmode = 0,
-      Ymode = 1;
+function loadNodesFrom(IDs) {
+const virtualWidth = window.innerWidth * 1600;
+const virtualHeight = window.innerHeight * 1600;
 
-    for (let i = 0; i < count; i++) {
-      let key = list[i];
-      let orcid, name;
-      // loadNodesFrom(objData.connections[name]);
-      if (key.match(/\d/)) {
-        orcid = key;
-        name = objData.orcid_to_name[orcid];
-      } else {
-        name = key;
-        orcid = objData.name_to_orcid[name];
-      }
+// Color palettes for more interesting color generation
+const colorPalettes = [
+  // Vibrant palette
+  [
+    { r: 255, g: 99, b: 72 }, // Coral Red
+    { r: 64, g: 194, b: 230 }, // Sky Blue
+    { r: 255, g: 166, b: 43 }, // Bright Orange
+    { r: 95, g: 39, b: 205 }, // Deep Purple
+    { r: 50, g: 200, b: 120 }, // Emerald Green
+  ],
+  // Pastel palette
+  [
+    { r: 255, g: 179, b: 186 }, // Soft Pink
+    { r: 255, g: 223, b: 186 }, // Peach
+    { r: 255, g: 255, b: 186 }, // Pale Yellow
+    { r: 186, g: 255, b: 201 }, // Mint Green
+    { r: 186, g: 225, b: 255 }, // Soft Blue
+  ],
+  // Earth tones
+  [
+    { r: 138, g: 97, b: 57 }, // Brown
+    { r: 75, g: 83, b: 32 }, // Olive Green
+    { r: 202, g: 164, b: 114 }, // Tan
+    { r: 100, g: 149, b: 237 }, // Cornflower Blue
+    { r: 188, g: 143, b: 143 }, // Rosy Brown
+  ],
+];
+  let Xmode = 0,
+    Ymode = 1;
 
-      // Randomly select a palette
-      const palette =
-        colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
-      const selectedColor = palette[Math.floor(Math.random() * palette.length)];
-
-      const nodeSize = Math.min(
-        Object.values(objData.coauthors)[i].length / 2 + 30,
-        120
-      );
-
-      Xmode += 1;
-      Ymode += 1;
-      nodes.push({
-        index: i,
-        id: orcid ? orcid : name,
-        x: Math.random() * virtualWidth,
-        y: Math.random() * virtualHeight,
-        vx: 2024 * (Xmode % 3 ? 1 : -1),
-        vy: 2024 * (Ymode % 3 ? 1 : -1),
-        size: nodeSize,
-        label: `${name}`,
-        color: `rgba(${selectedColor.r}, ${selectedColor.g}, ${
-          selectedColor.b
-        }, ${Math.random() * 0.5 + 0.5})`,
-        info: `${name}
-  Properties:
-  - Size: ${nodeSize.toFixed(2)}
-  - Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
-          Math.random() * virtualHeight
-        ).toFixed(2)})
-  Orcid: ${orcid ? orcid.replace(/-/g, " - ") : "(Coauthor)"}
-  Number of articles: ${
-    orcid ? objData.orcid[orcid].length : objData.coauthors[name].length
-  }
-  Articles Ranking: ${
-    orcid
-      ? Object.keys(objData.orcid).indexOf(orcid)
-      : "(Coauthor don't write article)"
-  }
-  Collaborations Ranking: ${i + 1}
-
-
-  Articles:
-
-  ${objData.coauthors[orcid ? orcid : name]
-    .map((article, index) =>
-      `${index + 1}. ${article["paper_title"]}`.length < 63
-        ? `${index + 1}. ${article["paper_title"]}`
-        : `${index + 1}. ${article["paper_title"]}`.slice(0, 55) + `....`
-    )
-    .join("\n")}
-`,
-      });
+  for (let i = 0; i < IDs.length; i++) {
+    let key = IDs[i];
+    let orcid, name;
+    if (key.match(/\d/)) {
+      orcid = key;
+      name = objData.orcid_to_name[orcid];
+    } else {
+      name = key;
+      orcid = objData.name_to_orcid[name];
     }
+
+    // Randomly select a palette
+    const palette =
+      colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+    const selectedColor = palette[Math.floor(Math.random() * palette.length)];
+
+    const nodeSize = Math.min(
+      Object.values(objData.coauthors)[i].length / 2 + 30,
+      120
+    );
+
+    Xmode += 1;
+    Ymode += 1;
+    nodes.push({
+      index: i,
+      id: orcid ? orcid : name,
+      x: Math.random() * virtualWidth,
+      y: Math.random() * virtualHeight,
+      vx: 2024 * (Xmode % 3 ? 1 : -1),
+      vy: 2024 * (Ymode % 3 ? 1 : -1),
+      size: nodeSize,
+      label: `${name}`,
+      color: `rgba(${selectedColor.r}, ${selectedColor.g}, ${
+        selectedColor.b
+      }, ${Math.random() * 0.5 + 0.5})`,
+      info: `${name}
+Properties:
+- Size: ${nodeSize.toFixed(2)}
+- Position: (${(Math.random() * virtualWidth).toFixed(2)}, ${(
+        Math.random() * virtualHeight
+      ).toFixed(2)})
+Orcid: ${orcid ? orcid.replace(/-/g, " - ") : "(Coauthor)"}
+Number of articles: ${
+        orcid ? objData.orcid[orcid].length : objData.coauthors[name].length
+      }
+Articles Ranking: ${
+        orcid
+          ? Object.keys(objData.orcid).indexOf(orcid)
+          : "(Coauthor don't write article)"
+      }
+Collaborations Ranking: ${i + 1}
+
+
+Articles:
+
+${objData.coauthors[orcid ? orcid : name]
+  .map((article, index) =>
+    `${index + 1}. ${article["paper_title"]}`.length < 63
+      ? `${index + 1}. ${article["paper_title"]}`
+      : `${index + 1}. ${article["paper_title"]}`.slice(0, 55) + `....`
+  )
+  .join("\n")}
+`,
+    });
   }
-  loadNodesFrom(Object.keys(objData.coauthors), nodeCount);
+}
+
+// Generate nodes
+let nodesList = Object.keys(objData.coauthors).slice(0,nodeCount);
+
+function generateNodes() {
+  loadNodesFrom(nodesList);
 }
 
 // Generate edges
@@ -308,7 +323,7 @@ function generateEdges() {
               (CONFIG.EDGE_THICKNESS_RANGE[1] -
                 CONFIG.EDGE_THICKNESS_RANGE[0]) +
             CONFIG.EDGE_THICKNESS_RANGE[0],
-          weight: Math.random(),
+          weight: Math.random() * 0.5,
         });
       } else {
         print(`${connections[index]} NOT FOUND IN NODESS !!`);
@@ -459,7 +474,7 @@ function render() {
 
   ctx.restore();
   updateNodes();
-  requestAnimationFrame(render);
+  animationFrameId = requestAnimationFrame(render);
 }
 
 // Update node positions
@@ -603,6 +618,8 @@ function setupEventHandlers() {
   });
 }
 
+
+let animationFrameId; // using in render()
 // Initialize the canvas and start the animation
 function init() {
   canvas.width = window.innerWidth;

@@ -10,6 +10,9 @@ const resultDisplay = document.getElementById("result-display");
 // Modal Control Functions
 operationsButton.addEventListener("click", () => {
   modalOverlay.style.display = "flex";
+
+  document.onkeydown = null;
+
   resetModal();
 });
 
@@ -18,6 +21,8 @@ function closeModal() {
 }
 
 function resetModal() {
+  document.onkeydown = null;
+
   operationSelection.style.display = "block";
   inputSection.querySelectorAll(".operation-input").forEach((input) => {
     input.style.display = "none";
@@ -26,6 +31,15 @@ function resetModal() {
 }
 
 function showOperationInput(operationNumber) {
+  steps = 1;
+
+  document.onkeydown = null;
+
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") executeOperation(operationNumber);
+  });
+
   operationSelection.style.display = "none";
   inputSection.querySelectorAll(".operation-input").forEach((input) => {
     input.style.display = "none";
@@ -36,6 +50,7 @@ function showOperationInput(operationNumber) {
 // Core Functions
 function calculateWeight(author1, author2, objData) {
   print(`Calculating weight between ${author1} and ${author2}`);
+
   let weight = 0;
 
   // Check direct connections
@@ -208,7 +223,18 @@ function generateCollaborationTree(authorId) {
   return treeHtml;
 }
 
-function createDataTable(authorPaths) {
+function tableNextStep() {
+  steps += 1;
+  executeOperation(4);
+}
+function fullTable() {
+  steps = Infinity;
+  executeOperation(4);
+}
+
+let steps, authorPaths;
+
+function createDataTable(authorPaths = authorPaths) {
   let authorName, authorID;
   if (objData.orcid_to_name[authorPaths]) {
     authorName = objData.orcid_to_name[authorPaths];
@@ -228,10 +254,11 @@ function createDataTable(authorPaths) {
             </tr>
             </thead>
             <tbody>`;
-
+  let i = 0;
   for (const [connectionID, articleCount] of Object.entries(
     objData.connections[authorID]
   )) {
+    if (i >= steps) break;
     dataTable += `
             <tr>
               <td>${authorName}  -  ${
@@ -241,13 +268,16 @@ function createDataTable(authorPaths) {
     }</td>
               <td>${articleCount}</td>
             </tr>`;
+    i += 1;
   }
   for (const [connectionID, subConnections] of Object.entries(
     objData.connections[authorID]
   )) {
+    if (i >= steps) break;
     for (const [subConnectionID, subArticleCount] of Object.entries(
       objData.connections[connectionID]
     )) {
+      if (i >= steps) break;
       dataTable += `
             <tr>
             <td>${
@@ -261,12 +291,29 @@ function createDataTable(authorPaths) {
       }</td>
             <td>${subArticleCount}</td>
             </tr>`;
+      i += 1;
     }
   }
 
   dataTable += `
         </tbody>
-        </table>`;
+        </table>
+        <p></p>
+
+        ${
+          steps <= i && steps != Infinity
+            ? `
+        <div style="display: flex; flex-direction: row-reverse; justify-content: space-between;">
+        <button onclick="tableNextStep()" class="mt-4">
+          <i class="fas fa-step-forward"></i> Next Step
+        </button>
+        <button onclick="fullTable()" class="mt-4">
+          <i class="fas fa-table"></i> Full Table
+        </button>
+        `
+            : ``
+        }
+        `;
 
   return dataTable;
 }
@@ -316,6 +363,11 @@ function findLongestPath(connections, startId) {
 
   return longestPath;
 }
+
+document.addEventListener("keydown", function (event) {
+  if (event.code === "Space") tableNextStep();
+});
+
 let pathResult;
 function executeOperation(operationNumber) {
   let result = "",
@@ -324,7 +376,7 @@ function executeOperation(operationNumber) {
 
   switch (operationNumber) {
     case 1:
-      let nameA,nameB,orcidA,orcidB;
+      let nameA, nameB, orcidA, orcidB;
       let authorA = document.getElementById("authorA").value;
       let authorB = document.getElementById("authorB").value;
 
@@ -352,12 +404,13 @@ function executeOperation(operationNumber) {
       pathResult = dijkstra(authorA, authorB);
       result =
         pathResult.error ||
-        `Shortest path found between <span style="color:#01FEE5;font-size=large;">${nameA}</span> and <span style="color:#01FEE5;font-size=large;">${nameB}</span> :<p>${pathResult.path.join(" -> ")}</p><p>\nDistance: ${
-          pathResult.distance
-        }</p>
+        `Shortest path found between <span style="color:#01FEE5;font-size=large;">${nameA}</span> and <span style="color:#01FEE5;font-size=large;">${nameB}</span> :<p>${pathResult.path.join(
+          " -> "
+        )}</p><p>\nDistance: ${pathResult.path.length}</p>
         <p></p>
+        <div style="display: flex; flex-direction: row-reverse; justify-content: space-between;">
         <button onclick="showPathGraph()" class="mt-4">Show the path in Network Graph</button>
-        <p></p>
+
         `;
       break;
 
@@ -369,11 +422,11 @@ function executeOperation(operationNumber) {
       }
 
       const authorQueue = getCoauthorArticleCounts(queueOrder, objData);
-      result = authorQueue.items
+      result = `${authorQueue.items
         .map(
           (item, i) => `${i + 1}. ${item.name} (${item.articleCount} articles)`
         )
-        .join("<br>");
+        .join("<br>")}<p></p>`;
       break;
 
     case 3:
@@ -385,7 +438,7 @@ function executeOperation(operationNumber) {
       result = generateCollaborationTree(authorTree);
       break;
     case 4:
-      const authorPaths = document.getElementById("authorPaths").value;
+      authorPaths = document.getElementById("authorPaths").value;
 
       const dataTable = createDataTable(authorPaths);
 
@@ -436,8 +489,12 @@ function executeOperation(operationNumber) {
   // Display result
   resultDisplay.innerHTML = `
     <h1>Operation Result</h1>
-    <div>${result}</div>
-    <button onclick="resetModal()" class="mt-4">Back to Operations</button>
+
+      ${result}
+      <button onclick="resetModal()" class="mt-4">
+      <i class="fas fa-arrow-left"></i>
+      Back to Operations</button>
+    </div>
   `;
   resultDisplay.style.display = "block";
   inputSection.querySelectorAll(".operation-input").forEach((input) => {

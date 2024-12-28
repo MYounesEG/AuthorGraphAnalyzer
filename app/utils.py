@@ -141,5 +141,8 @@ class initializeReader:
 if __name__ == "__main__":
     obj = initializeReader("DataSet.xlsx")
 
-    print(obj.connections["Charles M Cai"])  
-
+    print(obj.connections['Amit Kumar'])  
+    print("\n\n\n\n")
+    print(obj.connections["0000-0003-3642-0392"])  
+    print("\n\n\n\n")
+    print(obj.connections["0000-0001-7085-2354"]) 
