@@ -30,21 +30,44 @@ function resetModal() {
   resultDisplay.style.display = "none";
 }
 
+
 function showOperationInput(operationNumber) {
-  steps = 1;
-
-  document.onkeydown = null;
-
-
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") executeOperation(operationNumber);
-  });
-
+  resultDisplay.style.display = "none";
   operationSelection.style.display = "none";
   inputSection.querySelectorAll(".operation-input").forEach((input) => {
     input.style.display = "none";
   });
-  document.getElementById(`input${operationNumber}`).style.display = "flex";
+  
+  if (operationNumber === 3 && (typeof pathResult === 'undefined' || !pathResult.pathQueue)) {
+    resultDisplay.innerHTML = `
+      <h1>Warning</h1>
+      <p>Please first find a path between two authors using Operation 1 before viewing the network graph.</p>
+<div class="operation-button" onclick="showOperationInput(1)">
+              Shortest Path Between Authors
+            </div>
+    `;
+    resultDisplay.style.display = "block";
+  } else {
+    if(operationNumber === 3){
+      resultDisplay.innerHTML = `
+      <h1>Warning</h1>
+      <p>Please first find a path between two authors using Operation 1 before viewing the network graph.</p>
+<div class="operation-button" onclick="showOperationInput(1)">
+              Shortest Path Between Authors
+            </div>
+    `;
+    resultDisplay.style.display = "block";
+    }
+    steps = 1;
+    
+    document.onkeydown = null;
+    
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") executeOperation(operationNumber);
+    });
+    
+    document.getElementById(`input${operationNumber}`).style.display = "flex";
+  }
 }
 
 // Core Functions

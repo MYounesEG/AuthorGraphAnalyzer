@@ -122,12 +122,7 @@ function showPathGraph(authorPath = null) {
     }
   }
 
-  // Log path information for debugging
-  print(`Path visualization set up:
-    - Total nodes in path: ${pathNodes.length}
-    - Total edges in path: ${pathEdges.length}
-    - Start node: ${startNode?.label}
-    - End node: ${endNode?.label}`);
+ 
 
   // Pause node movement to make path more visible
   isMoving = false;
@@ -626,8 +621,8 @@ function init() {
   canvas.height = window.innerHeight;
   generateNodes();
   generateEdges();
-  setupEventHandlers();
   render();
 }
 
+setupEventHandlers();
 init();
