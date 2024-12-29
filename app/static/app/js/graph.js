@@ -1,5 +1,10 @@
+const contextMenu = document.createElement('div');
+contextMenu.className = 'canvas-context-menu';
+document.body.appendChild(contextMenu);
+
+
 const CONFIG = {
-  NODES: 20,
+  NODES: 100,
   EDGE_THICKNESS_RANGE: [0.1, 0.75],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
@@ -177,9 +182,6 @@ const canvas = document.getElementById("networkGraph");
 const ctx = canvas.getContext("2d");
 const infoBox = document.getElementById("info-box");
 const fullScreenBtn = document.getElementById("full-screen-btn");
-const zoomInBtn = document.getElementById("zoom-in-btn");
-const zoomOutBtn = document.getElementById("zoom-out-btn");
-const resetBtn = document.getElementById("reset-btn");
 const pauseMoveBtn = document.getElementById("pause-move-btn");
 
 let camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
@@ -191,10 +193,244 @@ let isMoving = true; // Nodes start moving by default
 // Define the count of the nodes
 const nodeCount = CONFIG.NODES;
 
+contextMenu.innerHTML = `
+    <div class="menu-item" data-action="center">
+        <i class="fas fa-crosshairs"></i> Center View
+    </div>
+    <div class="menu-item" data-action="info">
+        <i class="fas fa-info-circle"></i> Show Node Info
+    </div>
+
+    <div class="separator"></div>
+        <div class="menu-item" data-action="search">
+        <i class="fas fa-search"></i> Search Node
+    </div>
+    <div class="menu-item" data-action="addnode">
+        <i class="fas fa-plus-circle"></i> Add Node to Graph
+    </div>
+    <div class="separator"></div>
+
+        <div class="menu-item" data-action="zoomin">
+        <i class="fas fa-search-plus"></i> Zoom In
+    </div>
+    <div class="menu-item" data-action="zoomout">
+        <i class="fas fa-search-minus"></i> Zoom Out
+    </div>
+    <div class="menu-item" data-action="reset">
+        <i class="fas fa-undo"></i> Reset View
+    </div>
+`;
+
+
+// Create search prompt element
+const searchPrompt = document.createElement('div');
+searchPrompt.className = 'custom-prompt';
+searchPrompt.style.display = 'none';
+searchPrompt.innerHTML = `
+    <h3 style="color: var(--text-color, #e94560); margin-top: 0;">Search Node</h3>
+    <input type="text" id="search-node-input" placeholder="Enter node ID or name">
+    <div id="search-results" style="max-height: 200px; overflow-y: auto; margin: 10px 0;"></div>
+    <button onclick="closeSearchPrompt()">Close</button>
+`;
+document.body.appendChild(searchPrompt);
+
+function showSearchPrompt() {
+    searchPrompt.style.display = 'block';
+    const searchInput = document.getElementById('search-node-input');
+    searchInput.focus();
+    searchInput.value = ''; // Clear previous search
+    updateSearchResults(''); // Clear previous results
+}
+
+// Function to close search prompt
+function closeSearchPrompt() {
+    searchPrompt.style.display = 'none';
+}
+
+// Function to update search results
+function updateSearchResults(searchTerm) {
+    const resultsDiv = document.getElementById('search-results');
+    const searchLower = searchTerm.toLowerCase();
+    
+    if (!searchTerm) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+
+    const matchingNodes = nodes.filter(node => 
+        node.id.toLowerCase().includes(searchLower) || 
+        node.label.toLowerCase().includes(searchLower)
+    );
+
+    if (matchingNodes.length === 0) {
+        resultsDiv.innerHTML = '<div style="color: var(--text-color);">No matching nodes found</div>';
+        return;
+    }
+
+    resultsDiv.innerHTML = matchingNodes.map(node => `
+        <div class="search-result" onclick="focusNode('${node.id}')" style="
+            padding: 8px;
+            cursor: url('../image/hand.png'), auto;
+            color: var(--text-color);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: background-color 0.3s;
+        ">
+            ${node.label} (${node.id})
+        </div>
+    `).join('');
+}
+
+
+// Function to focus on a specific node
+function focusNode(nodeId) {
+  const node = nodes.find(n => n.id === nodeId);
+  if (node) {
+      camera.x = node.x;
+      camera.y = node.y;
+      camera.zoom = 1;
+      selectedNode = node;
+      closeSearchPrompt();
+  }
+}
+
+// Add search input event listener
+document.getElementById('search-node-input').addEventListener('input', (e) => {
+  updateSearchResults(e.target.value);
+});
+
+// Helper function to prompt for node ID
+function promptForNodeId() {
+  const nodeId = prompt("Enter the ID for the new node:");
+  if (nodeId && nodeId.trim()) {
+      if (!nodesList.includes(nodeId)) {
+          nodesList.push(nodeId.trim());
+          // Reinitialize the graph
+          cancelAnimationFrame(animationFrameId);
+          nodes.length = 0;  // Clear existing nodes
+          edges.length = 0;  // Clear existing edges
+          init();
+      } else {
+          alert("This node already exists in the graph!");
+      }
+  }
+}
+
+// Update the context menu display
+function showContextMenu(e) {
+  e.preventDefault();
+  
+  const rect = canvas.getBoundingClientRect();
+  const scaledMouseX =
+    ((e.clientX - rect.left) / rect.width) * canvas.width / camera.zoom + camera.x - canvas.width / (2 * camera.zoom);
+  const scaledMouseY =
+    ((e.clientY - rect.top) / rect.height) * canvas.height / camera.zoom + camera.y - canvas.height / (2 * camera.zoom);
+  
+  
+  const clickedNode = nodes.find(node => {
+      const dx = scaledMouseX - node.x;
+      const dy = scaledMouseY - node.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < node.size / camera.zoom;
+  });
+
+  contextMenu.style.display = 'block';
+  contextMenu.style.left = `${e.clientX}px`;
+  contextMenu.style.top = `${e.clientY}px`;
+  
+  // Store the clicked node for reference
+  contextMenu.clickedNode = clickedNode;
+  
+  // Update menu items based on whether a node was clicked
+  const centerMenuItem = contextMenu.querySelector('[data-action="center"]');
+  const infoMenuItem = contextMenu.querySelector('[data-action="info"]');
+  
+  if (centerMenuItem) {
+      if (!clickedNode) {
+          centerMenuItem.classList.add('disabled');
+          centerMenuItem.style.opacity = '0.5';
+          centerMenuItem.style.pointerEvents = 'none';
+      } else {
+          centerMenuItem.classList.remove('disabled');
+          centerMenuItem.style.opacity = '1';
+          centerMenuItem.style.pointerEvents = 'auto';
+      }
+  }
+  
+  if (infoMenuItem) {
+      if (!clickedNode) {
+          infoMenuItem.classList.add('disabled');
+          infoMenuItem.style.opacity = '0.5';
+          infoMenuItem.style.pointerEvents = 'none';
+      } else {
+          infoMenuItem.classList.remove('disabled');
+          infoMenuItem.style.opacity = '1';
+          infoMenuItem.style.pointerEvents = 'auto';
+      }
+  }
+
+}
+
+
+// Update the context menu click handler
+function handleContextMenuClick(e) {
+  const action = e.target.closest('.menu-item')?.getAttribute('data-action');
+  const node = contextMenu.clickedNode;
+  
+  switch(action) {
+      case 'center':
+          if (node) {
+              camera.x = node.x;
+              camera.y = node.y;
+              camera.zoom = 1;
+          }
+          break;
+      case 'info':
+          if (node) {
+              selectedNode = node;
+              infoBox.style.left = `${e.clientX + 10}px`;
+              infoBox.style.top = `${e.clientY + 10}px`;
+              infoBox.style.display = 'block';
+              infoBox.innerText = node.info;
+          }
+          break;
+      case 'search':
+          showSearchPrompt();
+          break;
+      case 'fullscreen':
+          if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen();
+              fullScreenBtn.innerHTML = '<i class="fas fa-compress icon"></i>Exit Fullscreen';
+          } else {
+              document.exitFullscreen();
+              fullScreenBtn.innerHTML = '<i class="fas fa-expand icon"></i>Fullscreen';
+          }
+          break;
+      case 'zoomin':
+          camera.zoom = Math.min(CONFIG.MAX_ZOOM, camera.zoom * (1 + CONFIG.ZOOM_SENSITIVITY));
+          break;
+      case 'zoomout':
+          camera.zoom = Math.max(CONFIG.MIN_ZOOM, camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY));
+          break;
+      case 'addnode':
+          promptForNodeId();
+          break;
+      case 'reset':
+          camera = Object.assign({}, defultCameraSettings);
+          selectedNode = null;
+          break;
+  }
+  
+  hideContextMenu();
+}
+
+function hideContextMenu() {
+  contextMenu.style.display = 'none';
+}
+
 
 function loadNodesFrom(IDs) {
-const virtualWidth = window.innerWidth * 1600;
-const virtualHeight = window.innerHeight * 1600;
+const virtualWidth = 2400 * 1.233 * 1600;
+const virtualHeight = 1300  * 1.233 * 1600;
 
 // Color palettes for more interesting color generation
 const colorPalettes = [
@@ -474,8 +710,8 @@ function render() {
 
 // Update node positions
 function updateNodes() {
-  const virtualWidth = window.innerWidth * 1600;
-  const virtualHeight = window.innerHeight * 1600;
+  const virtualWidth = 2400 * 1.233 * 1600;
+  const virtualHeight = 1300  * 1.233 * 1600;
 
   if (isMoving) {
     // Only update positions if isMoving is true
@@ -496,12 +732,36 @@ function setupEventHandlers() {
   let lastMouseX, lastMouseY;
   let justClicked = false;
 
+  canvas.addEventListener('contextmenu', showContextMenu);
+  contextMenu.addEventListener('click', handleContextMenuClick);
+  document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+          hideContextMenu();
+      }
+  });
+
+  
+    // Prevent context menu on the rest of the document
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target !== canvas) {
+          e.preventDefault();
+      }
+  });
+
+   
+    // Hide context menu when scrolling/panning
+    canvas.addEventListener('wheel', hideContextMenu);
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 2) { // If not right click
+            hideContextMenu();
+        }
+    });
+
   canvas.addEventListener("mousedown", (e) => {
     isDragging = true;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
     justClicked = true;
-    canvas.style.cursor = "grabbing";
   });
 
   canvas.addEventListener("mousemove", (e) => {
@@ -519,7 +779,6 @@ function setupEventHandlers() {
 
   canvas.addEventListener("mouseup", (e) => {
     isDragging = false;
-    canvas.style.cursor = "grab";
 
     // Only trigger node selection on a clean click (no dragging)
     if (justClicked) {
@@ -528,10 +787,11 @@ function setupEventHandlers() {
       pathNodes = [];
       pathEdges = [];
 
+      const rect = canvas.getBoundingClientRect();
       const scaledMouseX =
-        (e.clientX - canvas.width / 2) / camera.zoom + camera.x;
+        ((e.clientX - rect.left) / rect.width) * canvas.width / camera.zoom + camera.x - canvas.width / (2 * camera.zoom);
       const scaledMouseY =
-        (e.clientY - canvas.height / 2) / camera.zoom + camera.y;
+        ((e.clientY - rect.top) / rect.height) * canvas.height / camera.zoom + camera.y - canvas.height / (2 * camera.zoom);
 
       const clickedNode = nodes.find((node) => {
         const dx = scaledMouseX - node.x;
@@ -541,15 +801,11 @@ function setupEventHandlers() {
       });
       if (clickedNode) {
         selectedNode = clickedNode; // Store the clicked node
-        infoBox.style.left = `${e.clientX + 10}px`;
-        infoBox.style.top = `${e.clientY + 10}px`;
-        infoBox.style.display = "block";
-        infoBox.innerText = clickedNode.info;
         clickedNode.color = "";
       } else {
         selectedNode = null; // Deselect if no node is clicked
-        infoBox.style.display = "none";
       }
+      infoBox.style.display = "none";
     }
   });
 
@@ -580,25 +836,7 @@ function setupEventHandlers() {
     }
   });
 
-  // Zoom buttons
-  zoomInBtn.addEventListener("click", () => {
-    camera.zoom = Math.min(
-      CONFIG.MAX_ZOOM,
-      camera.zoom * (1 + CONFIG.ZOOM_SENSITIVITY)
-    );
-  });
 
-  zoomOutBtn.addEventListener("click", () => {
-    camera.zoom = Math.max(
-      CONFIG.MIN_ZOOM,
-      camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY)
-    );
-  });
-
-  // Reset view
-  resetBtn.addEventListener("click", () => {
-    camera = Object.assign({}, defultCameraSettings); // clone the defult settigs
-  });
 
   // Pause/Resume movement button
   pauseMoveBtn.addEventListener("click", () => {
@@ -617,8 +855,8 @@ function setupEventHandlers() {
 let animationFrameId; // using in render()
 // Initialize the canvas and start the animation
 function init() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = 3000;
+  canvas.height = 1700;
   generateNodes();
   generateEdges();
   render();

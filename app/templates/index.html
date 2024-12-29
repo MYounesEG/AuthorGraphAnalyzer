@@ -18,6 +18,14 @@
   </head>
 
   <body>
+    <audio id="background-music" autoplay>
+      <source
+        src="{% static 'app/music/7Rings-Piano.mp3' %}"
+        type="audio/mpeg"
+      />
+      Your browser does not support the audio element.
+    </audio>
+
     <div id="modal-overlay">
       <div id="modal-content">
         <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -98,8 +106,6 @@
             <button onclick="executeOperation(7)">Find Longest Path</button>
           </div>
         </div>
-
-
       </div>
     </div>
 
@@ -112,15 +118,7 @@
       >
         <i class="fas fa-expand icon"></i>Fullscreen
       </button>
-      <button id="zoom-in-btn" class="control-btn" title="Zoom In">
-        <i class="fas fa-search-plus icon"></i>Zoom In
-      </button>
-      <button id="zoom-out-btn" class="control-btn" title="Zoom Out">
-        <i class="fas fa-search-minus icon"></i>Zoom Out
-      </button>
-      <button id="reset-btn" class="control-btn" title="Reset View">
-        <i class="fas fa-redo icon"></i>Reset
-      </button>
+
       <button
         id="pause-move-btn"
         class="control-btn"
@@ -132,8 +130,15 @@
         <i class="fas fa-cogs icon"></i>Operations
       </button>
     </div>
-    <canvas id="networkGraph"></canvas>
-
+    <canvas id="networkGraph" height="1300" width="2400"></canvas>
+    <script>
+          document.addEventListener("click", function () {
+        const audio = document.getElementById("background-music");
+        audio.play().catch((error) => {
+          console.error("Autoplay failed:", error);
+        });
+      });
+    </script>
     <script>
       const objData = JSON.parse("{{ obj_data|escapejs }}");
     </script>

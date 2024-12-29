@@ -492,11 +492,22 @@ function executeOperation(operationNumber) {
 
     case 3:
       const authorTree = document.getElementById("authorBST").value;
-      if (!authorTree) {
-        result = "Please enter an author";
+      const indexInPath = pathResult.pathQueue.items.findIndex((node) => node.id==authorTree);
+      if (!authorTree || indexInPath == -1) {
+        result = "<p>Please enter an author</p>";
         break;
       }
-      /////////////////////  result = generateCollaborationTree(authorTree);
+      pathResult.pathQueue.items.splice(indexInPath, 1);
+      const resultTreeData = createBSTFromQueue(pathResult.pathQueue);
+      const resultTreeHtml = generateTreeVisualization(resultTreeData);
+
+      result = `
+              <div class="tree-visualization">
+                  ${resultTreeHtml}
+              </div>
+              <p></p>
+          `;
+
       break;
     case 4:
       authorPaths = document.getElementById("authorPaths").value;
