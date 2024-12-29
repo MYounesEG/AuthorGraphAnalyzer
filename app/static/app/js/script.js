@@ -37,66 +37,142 @@ function showOperationInput(operationNumber) {
   inputSection.querySelectorAll(".operation-input").forEach((input) => {
     input.style.display = "none";
   });
-  
-  if (operationNumber === 3 && (typeof pathResult === 'undefined' || !pathResult.pathQueue)) {
+
+  if (
+    operationNumber === 3 &&
+    (typeof pathResult === "undefined" || !pathResult.pathQueue)
+  ) {
     resultDisplay.innerHTML = `
-      <h1>Warning</h1>
-      <p>Please first find a path between two authors using Operation 1 before viewing the network graph.</p>
-<div class="operation-button" onclick="showOperationInput(1)">
+          <h1>Warning</h1>
+          <p>Please first find a path between two authors using Operation 1 before viewing the network graph.</p>
+          <div class="operation-button" onclick="showOperationInput(1)">
               Shortest Path Between Authors
-            </div>
-    `;
+          </div>
+      `;
     resultDisplay.style.display = "block";
   } else {
-    if(operationNumber === 3){
+    if (operationNumber === 3) {
+      // Create tree visualization
+      const treeData = createBSTFromQueue(pathResult.pathQueue);
+      const treeHtml = generateTreeVisualization(treeData);
+
       resultDisplay.innerHTML = `
-      <h1>Warning</h1>
-      <p>Please first find a path between two authors using Operation 1 before viewing the network graph.</p>
-<div class="operation-button" onclick="showOperationInput(1)">
-              Shortest Path Between Authors
-            </div>
-    `;
-    resultDisplay.style.display = "block";
+              <div class="tree-visualization">
+                  ${treeHtml}
+              </div>
+          `;
+      resultDisplay.style.display = "block";
     }
     steps = 1;
-    
+
     document.onkeydown = null;
-    
-    document.addEventListener("keydown", function(event) {
+
+    document.addEventListener("keydown", function (event) {
       if (event.key === "Enter") executeOperation(operationNumber);
     });
-    
+
     document.getElementById(`input${operationNumber}`).style.display = "flex";
   }
 }
 
-// Core Functions
-function calculateWeight(author1, author2, objData) {
-  print(`Calculating weight between ${author1} and ${author2}`);
+function createBSTFromQueue(queue) {
+  const items = [...queue.items]; // Create copy of queue items
+  if (items.length === 0) return null;
 
-  let weight = 0;
-
-  // Check direct connections
-  if (
-    objData.connections[author1]?.[author2] ||
-    objData.connections[author2]?.[author1]
-  ) {
-    weight = 1;
+  // Create root node
+  const root = { value: items[0], left: null, right: null };
+  
+  // Insert remaining items using BST logic
+  for (let i = 1; i < items.length; i++) {
+    insertNode(root, items[i]);
   }
 
-  // Check coauthorship
-  const author1Coauthors = objData.coauthors[author1] || [];
-  const author2Coauthors = objData.coauthors[author2] || [];
-
-  if (
-    author1Coauthors.some((paper) => paper.coauthors.includes(author2)) ||
-    author2Coauthors.some((paper) => paper.coauthors.includes(author1))
-  ) {
-    weight += 0.5;
-  }
-
-  return weight;
+  return root;
 }
+
+// Helper function to insert a node in BST
+function insertNode(root, value) {
+  if (!root) return { value, left: null, right: null };
+
+  // Compare using node.value.value
+  if (value.value <= root.value.value) {
+    if (root.left === null) {
+      root.left = { value, left: null, right: null };
+    } else {
+      insertNode(root.left, value);
+    }
+  } else {
+    if (root.right === null) {
+      root.right = { value, left: null, right: null };
+    } else {
+      insertNode(root.right, value);
+    }
+  }
+
+  return root;
+}
+
+// Generate SVG visualization
+function generateTreeVisualization(root) {
+  const width = 550;
+  const height = 500;
+  const nodeRadius = 30;
+  const levelHeight = 80;
+
+  let svg = `<svg width="${width}" height="${height}">`;
+
+  // Calculate tree depth to adjust horizontal spacing
+  function getTreeDepth(node) {
+    if (!node) return 0;
+    return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+  }
+
+  const treeDepth = getTreeDepth(root);
+  const initialSpacing = width / Math.pow(2, 1); // Adjust initial spacing based on tree depth
+
+  function calculateNodePosition(
+    node,
+    level = 0,
+    x = width / 2,
+    spacing = initialSpacing
+  ) {
+    if (!node) return;
+
+    // Store positions
+    node.x = x ;
+    node.y = level * levelHeight + 45;
+
+    // Calculate child positions with adjusted spacing
+    if (node.left) {
+      calculateNodePosition(node.left, level + 1, x - spacing / 2, spacing / 2);
+      svg += `<line class="link" x1="${node.x}" y1="${node.y}" x2="${node.left.x}" y2="${node.left.y}"/>`;
+    }
+
+    if (node.right) {
+      calculateNodePosition(node.right, level + 1, x + spacing / 2, spacing / 2);
+      svg += `<line class="link" x1="${node.x}" y1="${node.y}" x2="${node.right.x}" y2="${node.right.y}"/>`;
+    }
+
+    // Draw node
+    svg += `
+      <g class="node" transform="translate(${node.x},${node.y})">
+          <circle r="${nodeRadius}"/>
+          <text dy=".3em" text-anchor="middle">${node.value.value}</text>
+          <text dy="3.5em" text-anchor="middle">${
+            objData.orcid_to_name[node.value.id]
+              ? objData.orcid_to_name[node.value.id]
+              : node.value.id
+          }</text>
+      </g>
+    `;
+  }
+
+  if (root) calculateNodePosition(root);
+
+  svg += "</svg>";
+  return svg;
+}
+
 
 function dijkstra(startNode, endNode) {
   const distances = {};
@@ -147,12 +223,24 @@ function dijkstra(startNode, endNode) {
   }
 
   const pathQueue = new Queue();
-  path.forEach((entry) => pathQueue.enqueue(entry));
+  let distance = 0;
+
+  for (let i = 0; i < path.length; i++) {
+    pathQueue.enqueue({
+      id: path[i],
+      value: i
+        ? objData.connections[path[i]][path[i - 1]]
+        : (objData.connections[path[i]][path[i + 1]] +
+            objData.connections[path[i + 1]][path[i + 2]]) /
+          2,
+    });
+    if (i) distance += objData.connections[path[i]][path[i - 1]];
+  }
 
   return {
     pathQueue,
     path,
-    distance: distances[endNode],
+    distance: distance,
   };
 }
 
@@ -194,56 +282,6 @@ class Queue {
   size() {
     return this.items.length;
   }
-}
-
-function generateCollaborationTree(authorId) {
-  const authorName = objData.orcid_to_name[authorId] || authorId;
-  const connections = objData.connections[authorId] || {};
-
-  let treeHtml = `
-    <div class="tree-container">
-      <div class="level-title">Root Author</div>
-      <div class="tree-level">
-        <div class="tree-node">${authorName}</div>
-      </div>
-      <div class="level-title">Direct Collaborators</div>
-      <div class="tree-level">
-  `;
-
-  // Add direct collaborators
-  Object.entries(connections).forEach(([collaboratorId, weight]) => {
-    const collaboratorName =
-      objData.orcid_to_name[collaboratorId] || collaboratorId;
-    const subConnections = objData.connections[collaboratorId] || {};
-
-    treeHtml += `
-      <div class="parent-group">
-        <div class="connection-line root-to-parent"></div>
-        <div class="tree-node">${collaboratorName}</div>
-        <div class="children-group">
-          <div class="connection-line parent-to-children"></div>
-    `;
-
-    // Add secondary connections
-    Object.keys(subConnections)
-      .slice(0, 5)
-      .forEach((subId) => {
-        const subName = objData.orcid_to_name[subId] || subId;
-        treeHtml += `<div class="tree-node" style="font-size: 0.9em;">${subName}</div>`;
-      });
-
-    treeHtml += `
-        </div>
-      </div>
-    `;
-  });
-
-  treeHtml += `
-      </div>
-    </div>
-  `;
-
-  return treeHtml;
 }
 
 function tableNextStep() {
@@ -458,7 +496,7 @@ function executeOperation(operationNumber) {
         result = "Please enter an author";
         break;
       }
-      result = generateCollaborationTree(authorTree);
+      /////////////////////  result = generateCollaborationTree(authorTree);
       break;
     case 4:
       authorPaths = document.getElementById("authorPaths").value;
