@@ -54,12 +54,12 @@
     --scroll-size: 15px;
     --scroll-radius: 20px;
     --scroll-track: rgb(255 255 255 / 10%);
-    --scroll-thumb: linear-gradient(45deg, #e94560, #a68eff);
+    --scroll-thumb: linear-gradient(45deg, #10c9f7, #834ace);
 }
 
 :root {
     --bg-color: #1a1a2e;
-    --text-color: #e94560;
+    --text-color: #10c9f7;
     --node-highlight: #16213e;
     --edge-color: #0f3460;
 }
@@ -579,18 +579,4 @@ td {
     overflow-y: auto;
     border-radius: 4px;
     background-color: rgba(0, 0, 0, 0.2);
-}
-
-#search-results::-webkit-scrollbar {
-    width: 8px;
-}
-
-#search-results::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-}
-
-#search-results::-webkit-scrollbar-thumb {
-    background: var(--text-color, #e94560);
-    border-radius: 4px;
 }

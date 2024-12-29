@@ -646,10 +646,10 @@ function render() {
 
     if (node === selectedNode) {
       // Selected node styling
-      gradient.addColorStop(0.7, "blue");
+      gradient.addColorStop(0.7, "pink");
       colorCoordinates = "rgb(132, 0, 0, ";
     } else if (nodePathStatus === "endpoint") {
-      gradient.addColorStop(0.7, "green");
+      gradient.addColorStop(0.7, "white");
       // Start/end node styling
       colorCoordinates = "rgb(255, 0, 0, ";
     } else if (nodePathStatus === "path") {
