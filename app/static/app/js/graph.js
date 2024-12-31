@@ -4,7 +4,7 @@ document.body.appendChild(contextMenu);
 
 
 const CONFIG = {
-  NODES: 100,
+  NODES: 3,
   EDGE_THICKNESS_RANGE: [0.1, 0.75],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
@@ -14,7 +14,7 @@ const CONFIG = {
 let defultCameraSettings = {
   x: 1103269.7699274558,
   y: 515086.24360419495,
-  zoom: 0.02102740350847559,
+  zoom: 0.005743998144764671,
   initialX: 0,
   initialY: 0,
 };
@@ -65,9 +65,10 @@ function showPathGraph(authorPath = null) {
     print("Path must contain at least 2 nodes");
     return;
   }
+
   for(let i=0;i<path.length;i++)
-  if(!nodes.find((node) => node.id === path[i]))
-    nodesList.push(path[i]);
+    if(!nodes.find((node) => node.id === path[i]))
+     nodesList.push(path[i]);
 
   { //reinitialize the network graph 
 
@@ -287,7 +288,7 @@ function focusNode(nodeId) {
   if (node) {
       camera.x = node.x;
       camera.y = node.y;
-      camera.zoom = 1;
+      camera.zoom = 0.005743998144764671;
       selectedNode = node;
       closeSearchPrompt();
   }
@@ -370,8 +371,89 @@ function showContextMenu(e) {
 
 }
 
+const addNodePrompt = document.createElement('div');
+addNodePrompt.className = 'custom-prompt';
+addNodePrompt.style.display = 'none';
+addNodePrompt.innerHTML = `
+    <h3 style="color: var(--text-color, #e94560); margin-top: 0;">Add Node to Graph</h3>
+    <input type="text" id="add-node-input" placeholder="Enter node ID or name">
+    <div id="add-node-results" style="max-height: 200px; overflow-y: auto; margin: 10px 0;"></div>
+    <button onclick="closeAddNodePrompt()">Close</button>
+`;
+document.body.appendChild(addNodePrompt);
 
-// Update the context menu click handler
+function showAddNodePrompt() {
+    addNodePrompt.style.display = 'block';
+    const addInput = document.getElementById('add-node-input');
+    addInput.focus();
+    addInput.value = ''; // Clear previous search
+    updateAddNodeResults(''); // Clear previous results
+}
+
+function closeAddNodePrompt() {
+    addNodePrompt.style.display = 'none';
+}
+
+function updateAddNodeResults(searchTerm) {
+    const resultsDiv = document.getElementById('add-node-results');
+    const searchLower = searchTerm.toLowerCase();
+    
+    if (!searchTerm) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+
+    // Search through objData.coauthors for matching nodes
+    const matchingNodes = Object.keys(objData.coauthors).filter(nodeId => {
+        const name = objData.orcid_to_name[nodeId] || nodeId;
+        return !nodesList.includes(nodeId) && // Only show nodes not already in graph
+               (nodeId.toLowerCase().includes(searchLower) || 
+                name.toLowerCase().includes(searchLower));
+    });
+
+    if (matchingNodes.length === 0) {
+        resultsDiv.innerHTML = '<div style="color: var(--text-color);">No matching nodes found</div>';
+        return;
+    }
+
+    resultsDiv.innerHTML = matchingNodes.map(nodeId => {
+        const name = objData.orcid_to_name[nodeId] || nodeId;
+        return `
+            <div class="search-result" onclick="addNodeToGraph('${nodeId}')" style="
+                padding: 8px;
+                cursor: url('../image/hand.png'), auto;
+                color: var(--text-color);
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                transition: background-color 0.3s;
+            ">
+                ${name} (${nodeId})
+            </div>
+        `;
+    }).join('');
+}
+
+function addNodeToGraph(nodeId) {
+    if (!nodesList.includes(nodeId)) {
+        nodesList.push(nodeId);
+        // Reinitialize the graph
+        cancelAnimationFrame(animationFrameId);
+        nodes.length = 0;  // Clear existing nodes
+        edges.length = 0;  // Clear existing edges
+        init();
+        closeAddNodePrompt();
+        camera.x = node.x;
+        camera.y = node.y;
+        camera.zoom = 0.005743998144764671;
+    } else {
+        alert("This node already exists in the graph!");
+    }
+}
+
+// Add search input event listener for add node
+document.getElementById('add-node-input').addEventListener('input', (e) => {
+    updateAddNodeResults(e.target.value);
+});
+
 function handleContextMenuClick(e) {
   const action = e.target.closest('.menu-item')?.getAttribute('data-action');
   const node = contextMenu.clickedNode;
@@ -381,7 +463,7 @@ function handleContextMenuClick(e) {
           if (node) {
               camera.x = node.x;
               camera.y = node.y;
-              camera.zoom = 1;
+              camera.zoom = 0.005743998144764671;
           }
           break;
       case 'info':
@@ -412,7 +494,7 @@ function handleContextMenuClick(e) {
           camera.zoom = Math.max(CONFIG.MIN_ZOOM, camera.zoom * (1 - CONFIG.ZOOM_SENSITIVITY));
           break;
       case 'addnode':
-          promptForNodeId();
+          showAddNodePrompt();
           break;
       case 'reset':
           camera = Object.assign({}, defultCameraSettings);
@@ -487,7 +569,7 @@ const colorPalettes = [
     Ymode += 1;
     nodes.push({
       index: i,
-      id: orcid ? orcid : name,
+      id: orcid || name,
       x: Math.random() * virtualWidth,
       y: Math.random() * virtualHeight,
       vx: 2024 * (Xmode % 3 ? 1 : -1),
@@ -517,7 +599,7 @@ Collaborations Ranking: ${i + 1}
 
 Articles:
 
-${objData.coauthors[orcid ? orcid : name]
+${objData.coauthors[orcid || name]
   .map((article, index) =>
     `${index + 1}. ${article["paper_title"]}`.length < 63
       ? `${index + 1}. ${article["paper_title"]}`

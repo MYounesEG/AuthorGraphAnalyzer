@@ -50,8 +50,7 @@ function showOperationInput(operationNumber) {
           </div>
       `;
     resultDisplay.style.display = "block";
-  } else {
-    if (operationNumber === 3) {
+  } else if (operationNumber === 3) {
       // Create tree visualization
       const treeData = createBSTFromQueue(pathResult.pathQueue);
       const treeHtml = generateTreeVisualization(treeData);
@@ -72,7 +71,7 @@ function showOperationInput(operationNumber) {
     });
 
     document.getElementById(`input${operationNumber}`).style.display = "flex";
-  }
+  
 }
 
 function createBSTFromQueue(queue) {
@@ -158,11 +157,7 @@ function generateTreeVisualization(root) {
       <g class="node" transform="translate(${node.x},${node.y})">
           <circle r="${nodeRadius}"/>
           <text dy=".3em" text-anchor="middle">${node.value.value}</text>
-          <text dy="3.5em" text-anchor="middle">${
-            objData.orcid_to_name[node.value.id]
-              ? objData.orcid_to_name[node.value.id]
-              : node.value.id
-          }</text>
+          <text dy="3.5em" text-anchor="middle">${objData.orcid_to_name[node.value.id] || node.value.id}</text>
       </g>
     `;
   }
@@ -322,11 +317,7 @@ function createDataTable(authorPaths = authorPaths) {
     if (i >= steps) break;
     dataTable += `
             <tr>
-              <td>${authorName}  -  ${
-      objData.orcid_to_name[connectionID]
-        ? objData.orcid_to_name[connectionID]
-        : connectionID
-    }</td>
+              <td>${authorName}  -  ${objData.orcid_to_name[connectionID] || connectionID}</td>
               <td>${articleCount}</td>
             </tr>`;
     i += 1;
@@ -341,15 +332,7 @@ function createDataTable(authorPaths = authorPaths) {
       if (i >= steps) break;
       dataTable += `
             <tr>
-            <td>${
-              objData.orcid_to_name[connectionID]
-                ? objData.orcid_to_name[connectionID]
-                : connectionID
-            } - ${
-        objData.orcid_to_name[subConnectionID]
-          ? objData.orcid_to_name[subConnectionID]
-          : subConnectionID
-      }</td>
+            <td>${objData.orcid_to_name[connectionID] || connectionID} - ${objData.orcid_to_name[subConnectionID] || subConnectionID}</td>
             <td>${subArticleCount}</td>
             </tr>`;
       i += 1;
@@ -525,9 +508,7 @@ function executeOperation(operationNumber) {
       break;
     case 5:
       const IDinput = document.getElementById("authorCount").value;
-      name = objData.orcid_to_name[IDinput]
-        ? objData.orcid_to_name[IDinput]
-        : IDinput;
+      name = objData.orcid_to_name[IDinput] || IDinput;
 
       result = `The counting of collaborators for ${name} is : ${
         Object.keys(objData.connections[IDinput]).length
