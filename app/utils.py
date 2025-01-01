@@ -147,10 +147,10 @@ if __name__ == "__main__":
     print("\n\n\n\n")
     print(obj.connections["0000-0001-7085-2354"]) 
 """
-Mohit Saraswat   
- 0000-0003-0901-5076
- 0000-0001-7085-2354
-     0000-0002-0165-1556   
-  Pramod Tiwary
+Mohit Saraswat
+0000-0003-0901-5076
+0000-0001-7085-2354
+0000-0002-0165-1556
+Pramod Tiwary
 
 """

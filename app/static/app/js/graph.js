@@ -4,7 +4,7 @@ document.body.appendChild(contextMenu);
 
 
 const CONFIG = {
-  NODES: 3,
+  NODES: 1,
   EDGE_THICKNESS_RANGE: [0.1, 0.75],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
@@ -335,8 +335,8 @@ function showContextMenu(e) {
   });
 
   contextMenu.style.display = 'block';
-  contextMenu.style.left = `${e.clientX}px`;
-  contextMenu.style.top = `${e.clientY}px`;
+  contextMenu.style.left = `${Math.min(1161,e.clientX)}px`;
+  contextMenu.style.top = `${Math.min(376,e.clientY)}px`;
   
   // Store the clicked node for reference
   contextMenu.clickedNode = clickedNode;
@@ -469,8 +469,8 @@ function handleContextMenuClick(e) {
       case 'info':
           if (node) {
               selectedNode = node;
-              infoBox.style.left = `${e.clientX + 10}px`;
-              infoBox.style.top = `${e.clientY + 10}px`;
+              infoBox.style.left = `${Math.min(889,e.clientX + 10)}px`;
+              infoBox.style.top = `${Math.min(349,e.clientY + 10)}px`;
               infoBox.style.display = 'block';
               infoBox.innerText = node.info;
           }
@@ -644,7 +644,6 @@ function generateEdges() {
     }
   });
 }
-
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -691,16 +690,16 @@ function render() {
         afterEdges.push(edge);
       }
     } catch {}
-    afterEdges.forEach((edge) => {
-      const source = nodes[edge.source];
-      const target = nodes[edge.target];
+  afterEdges.forEach((edge) => {
+    const source = nodes[edge.source];
+    const target = nodes[edge.target];
 
-      ctx.strokeStyle = "red";
-      ctx.beginPath();
-      ctx.lineWidth = edge.thickness / camera.zoom;
-      ctx.moveTo(source.x, source.y);
-      ctx.lineTo(target.x, target.y);
-      ctx.stroke();
+    ctx.strokeStyle = "red";
+    ctx.beginPath();
+    ctx.lineWidth = edge.thickness / camera.zoom;
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(target.x, target.y);
+    ctx.stroke();
     });
   });
 
