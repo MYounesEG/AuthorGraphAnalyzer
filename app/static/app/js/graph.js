@@ -4,7 +4,7 @@ document.body.appendChild(contextMenu);
 
 
 const CONFIG = {
-  NODES: 1,
+  NODES: 300,
   EDGE_THICKNESS_RANGE: [0.1, 0.75],
   ZOOM_SENSITIVITY: 0.2,
   MAX_ZOOM: 10000,
