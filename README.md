@@ -44,14 +44,6 @@
     <li>
         <p><strong>Clone the repository</strong>:</p>
         <div class="md-code-block">
-            <div class="md-code-block-banner-wrap">
-                <div class="md-code-block-banner">
-                    <div class="md-code-block-infostring">bash</div>
-                    <div class="md-code-block-action">
-                        <div class="ds-markdown-code-copy-button">Copy</div>
-                    </div>
-                </div>
-            </div>
             <pre><span class="token function">git</span> clone https://github.com/MYounesEG/myouneseg-authorgraphanalyzer.git
 <span class="token builtin class-name">cd</span> myouneseg-authorgraphanalyzer</pre>
         </div>
@@ -60,14 +52,6 @@
         <p><strong>Install dependencies</strong>:<br>Make sure you have Python and Node.js installed. Then, install
             the required Python packages and Node.js dependencies:</p>
         <div class="md-code-block">
-            <div class="md-code-block-banner-wrap">
-                <div class="md-code-block-banner">
-                    <div class="md-code-block-infostring">bash</div>
-                    <div class="md-code-block-action">
-                        <div class="ds-markdown-code-copy-button">Copy</div>
-                    </div>
-                </div>
-            </div>
             <pre>pip <span class="token function">install</span> <span class="token parameter variable">-r</span> requirements.txt
 <span class="token function">npm</span> <span class="token function">install</span></pre>
         </div>
@@ -75,28 +59,12 @@
     <li>
         <p><strong>Run the Django server</strong>:</p>
         <div class="md-code-block">
-            <div class="md-code-block-banner-wrap">
-                <div class="md-code-block-banner">
-                    <div class="md-code-block-infostring">bash</div>
-                    <div class="md-code-block-action">
-                        <div class="ds-markdown-code-copy-button">Copy</div>
-                    </div>
-                </div>
-            </div>
             <pre>python manage.py runserver</pre>
         </div>
     </li>
     <li>
         <p><strong>Compile SCSS</strong>:<br>If you make changes to the SCSS files, you can compile them using:</p>
         <div class="md-code-block">
-            <div class="md-code-block-banner-wrap">
-                <div class="md-code-block-banner">
-                    <div class="md-code-block-infostring">bash</div>
-                    <div class="md-code-block-action">
-                        <div class="ds-markdown-code-copy-button">Copy</div>
-                    </div>
-                </div>
-            </div>
             <pre>npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css</pre>
         </div>
     </li>
