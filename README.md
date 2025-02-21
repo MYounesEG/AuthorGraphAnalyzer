@@ -33,6 +33,12 @@
     </li>
 </ul>
 <h2>Screenshots</h2>
+<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot1.png">
+<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot2.png">
+<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot3.png">
+<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot4.png">
+<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot5.png">
+
 <h2>Installation</h2>
 <ol start="1">
     <li>
