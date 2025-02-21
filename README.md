@@ -1,119 +1,63 @@
+# Author Collaboration Network Visualization 🌐
 
-<h1>Author Collaboration Network Analyzer</h1>
-<p>This project is a web-based tool for analyzing and visualizing author collaboration networks. It allows users to
-    explore relationships between authors, find the shortest path between two authors, create collaboration queues,
-    and visualize the network using interactive graphs.</p>
-<h2>Features</h2>
-<ul>
-    <li>
-        <p><strong>Interactive Network Graph</strong>: Visualize author collaborations with an interactive graph.
-        </p>
-    </li>
-    <li>
-        <p><strong>Shortest Path Finder</strong>: Find the shortest path between two authors based on their
-            collaborations.</p>
-    </li>
-    <li>
-        <p><strong>Collaboration Queue</strong>: Generate a queue of authors based on their collaboration counts.
-        </p>
-    </li>
-    <li>
-        <p><strong>Binary Search Tree Visualization</strong>: Create and visualize a binary search tree from the
-            collaboration data.</p>
-    </li>
-    <li>
-        <p><strong>Longest Path Finder</strong>: Find the longest path in the collaboration network for a given
-            author.</p>
-    </li>
-    <li>
-        <p><strong>Count Collaborators</strong>: Count the number of collaborators for a specific author.</p>
-    </li>
-    <li>
-        <p><strong>Most Collaborative Author</strong>: Identify the author with the most collaborations.</p>
-    </li>
-</ul>
-<h2>Screenshots</h2>
-<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot1.png">
-<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot2.png">
-<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot3.png">
-<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot4.png">
-<img src="https://raw.githubusercontent.com/MYounesEG/AuthorGraphAnalyzer/refs/heads/main/Screenshots/screenshot5.png">
+This project is a web-based visualization tool for analyzing and exploring author collaboration networks. It uses Django as the backend framework and JavaScript (with HTML5 Canvas) for the frontend visualization. The tool allows users to interact with a network graph of authors, explore their collaborations, and perform various operations like finding the shortest path between authors, creating collaboration queues, and more.
 
-<h2>Installation</h2>
-<ol start="1">
-    <li>
-        <p><strong>Clone the repository</strong>:</p>
-        <div class="md-code-block">
-            <pre><span class="token function">git</span> clone https://github.com/MYounesEG/myouneseg-authorgraphanalyzer.git
-<span class="token builtin class-name">cd</span> myouneseg-authorgraphanalyzer</pre>
-        </div>
-    </li>
-    <li>
-        <p><strong>Install dependencies</strong>:<br>Make sure you have Python and Node.js installed. Then, install
-            the required Python packages and Node.js dependencies:</p>
-        <div class="md-code-block">
-            <pre>pip <span class="token function">install</span> <span class="token parameter variable">-r</span> requirements.txt
-<span class="token function">npm</span> <span class="token function">install</span></pre>
-        </div>
-    </li>
-    <li>
-        <p><strong>Run the Django server</strong>:</p>
-        <div class="md-code-block">
-            <pre>python manage.py runserver</pre>
-        </div>
-    </li>
-    <li>
-        <p><strong>Compile SCSS</strong>:<br>If you make changes to the SCSS files, you can compile them using:</p>
-        <div class="md-code-block">
-            <pre>npx sass app/static/app/scss/styles.scss app/static/app/css/styles.css</pre>
-        </div>
-    </li>
-    <li>
-        <p><strong>Start the application</strong>:<br>Use the provided <code>start.bat</code> script to compile
-            SCSS, collect static files, and start the server:</p>
-        <div>
-            <pre>start.bat</pre>
-        </div>
-    </li>
-</ol>
-<h2>Usage</h2>
-<ol start="1">
-    <li>
-        <p>Open your browser and navigate to <code>http://127.0.0.1:8000/</code>.</p>
-    </li>
-    <li>
-        <p>Use the interactive graph to explore author collaborations.</p>
-    </li>
-    <li>
-        <p>Click on the "Operations" button to perform various operations such as finding the shortest path,
-            creating a collaboration queue, or visualizing a binary search tree.</p>
-    </li>
-</ol>
-<h2>Contributors</h2>
-<ul>
-    <li>
-        <p><strong><a href="https://github.com/MerveSevim44" target="_blank" rel="noreferrer">Merve
-                    Sevim</a></strong></p>
-    </li>
-    <li>
-        <p><strong><a href="https://github.com/MYounesEG" target="_blank" rel="noreferrer">Mohamed
-                    Younes</a></strong></p>
-    </li>
-</ul>
-<h2>License</h2>
-<p>This project is licensed under the MIT License. See the <a href="LICENSE" target="_blank"
-        rel="noreferrer">LICENSE</a> file for details.</p>
-<h2>Acknowledgments</h2>
-<ul>
-    <li>
-        <p>This project uses Django for the backend and D3.js for graph visualization.</p>
-    </li>
-    <li>
-        <p>Special thanks to the contributors for their hard work and dedication.</p>
-    </li>
-</ul>
-<h2>Contact</h2>
-<p>For any questions or suggestions, feel free to reach out to the contributors via their GitHub profiles.</p>
-<hr>
-<p><strong>Note</strong>: Make sure to replace <code>LICENSE</code> with the actual license file if you have one. If
-    you don't have a license file, you can create one or remove the reference to it in the README.</p>
+## Features ✨
+
+- **Interactive Network Graph**: Visualize author collaborations as a dynamic, interactive graph. 📊
+- **Custom Context Menu**: Right-click on the graph to access a custom context menu with options like centering the view, showing node info, searching nodes, and more. 🖱️
+- **Shortest Path Between Authors**: Find the shortest collaboration path between two authors. 🛤️
+- **Author Collaboration Queue**: Create a queue of authors based on their collaboration counts. 📚
+- **Binary Search Tree**: Generate a binary search tree from the collaboration data using **D3.js**. 🌳
+- **Collaborator Shortest Paths**: Calculate the shortest paths for a given author's collaborators. 🗺️
+- **Count Collaborators**: Count the number of collaborators for a specific author. 🔢
+- **Most Collaborative Author**: Identify the author with the most collaborations. 🏆
+- **Longest Path for Author**: Find the longest collaboration path for a given author. 🏁
+
+## Technologies Used 🛠️
+
+- **Backend**: Django (Python) 🐍
+- **Frontend**: HTML5, CSS (SCSS), JavaScript (Canvas API) 🎨
+- **Data Handling**: Pandas (for Excel file processing) 📄
+- **Visualization**: Custom JavaScript-based graph rendering 🖼️
+- **Tree Visualization**: D3.js (for binary search tree visualization) 🌲
+
+## Screenshots 📸
+
+|1. Interactive Network Graph |2. Custom Context Menu |
+|:---:|:---:|
+| ![Interactive Network Graph](Screenshots/network_graph.png) | ![Custom Context Menu](Screenshots/context_menu.png)|
+| 3. Shortest Path Between Authors | 4. Binary Search Tree Visualization (D3.js) | 
+| ![Shortest Path](Screenshots/shortest_path.png) | ![Binary Search Tree](Screenshots/binary_search_tree.png)|
+| 5. Author Collaboration Queue | 6. Longest Path for Author |
+| ![Collaboration Queue](Screenshots/collaboration_queue.png) | ![Longest Path](Screenshots/longest_path.png)|
+
+## Getting Started 🚀
+
+### Prerequisites
+
+- Python 3.x 🐍
+- Django 🖥️
+- Pandas 📊
+- Node.js (for SCSS compilation) 🛠️
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/AuthorCollaborationNetwork.git
+   cd AuthorCollaborationNetwork
+   ```
+
+2. **Run the project**:
+- Simply double-click the `start.bat` file to automatically compile SCSS, collect static files, and start the Django development server. 🖱️
+- The application will open in your default browser at `http://127.0.0.1:8000`. 🌐
+
+## Contributing 🤝
+
+Contributions are welcome! Please feel free to submit a pull request or open an issue.
+
+### Contributors
+
+- [MYounesEG](https://github.com/MYounesEG) 👨‍💻
+- [MerveSevim44](https://github.com/MerveSevim44) 👩‍💻
