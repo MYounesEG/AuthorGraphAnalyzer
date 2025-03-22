@@ -45,8 +45,8 @@ This project is a web-based visualization tool for analyzing and exploring autho
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/AuthorCollaborationNetwork.git
-   cd AuthorCollaborationNetwork
+   git clone https://github.com/YOUR_USERNAME/AuthorGraphAnalyzer.git
+   cd AuthorGraphAnalyzer
    ```
 
 2. **Run the project**:
